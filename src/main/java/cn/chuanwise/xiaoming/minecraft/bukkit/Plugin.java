@@ -6,6 +6,7 @@ import cn.chuanwise.storage.file.StoredFile;
 import cn.chuanwise.util.ConditionUtil;
 import io.netty.channel.ChannelFuture;
 import lombok.Getter;
+import org.bstats.bukkit.Metrics;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +32,9 @@ public class Plugin extends BukkitPlugin {
     @Override
     protected void onEnable0() throws Exception {
         final File dataFolder = createDataFolder();
+
+        final int pluginId = 12125;
+        final Metrics metrics = new Metrics(this, pluginId);
 
         // 载入语言文件
         final File languageFile = new File(dataFolder, "language.yml");

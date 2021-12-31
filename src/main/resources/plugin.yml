@@ -1,1 +1,4 @@
-main:
+name: XiaoMing
+main: cn.chuanwise.xiaoming.minecraft.bukkit.Plugin
+version: 4.0-exp
+authors: [Chuanwise, ThymeChen]

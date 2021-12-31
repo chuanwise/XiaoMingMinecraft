@@ -1,0 +1,6 @@
+{
+  "name": "XiaomingMinecraft",
+  "authors": ["Chuanwise", "ThymeChen"],
+  "main": "cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin",
+  "version": "4.0-exp"
+}

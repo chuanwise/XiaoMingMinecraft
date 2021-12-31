@@ -5,7 +5,10 @@ import cn.chuanwise.util.CollectionUtil;
 import cn.chuanwise.util.ConditionUtil;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.Configuration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.ConnectionInteractors;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.StateInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.VerifyInteractors;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.listeners.ChannelListeners;
 import cn.chuanwise.xiaoming.plugin.JavaPlugin;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
 import io.netty.channel.ChannelFuture;
@@ -39,6 +42,7 @@ public class Plugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // 启动服务器
         if (configuration.getConnection().isAutoBind()) {
             server.bind()
                     .orElseThrow()
@@ -50,6 +54,17 @@ public class Plugin extends JavaPlugin {
                         }
                     });
         }
+
+        // 注册监听器
+        xiaomingBot.getEventManager().registerListeners(new ChannelListeners(), this);
+
+        // 注册交互器参数解析器
+        registerParameterParsers();
+
+        // 注册交互器
+        xiaomingBot.getInteractorManager().registerInteractors(new ConnectionInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(new StateInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(new VerifyInteractors(), this);
     }
 
     @Override
@@ -61,7 +76,6 @@ public class Plugin extends JavaPlugin {
                 getLogger().info("关闭服务器失败");
             }
         }));
-
     }
 
     protected void registerParameterParsers() {

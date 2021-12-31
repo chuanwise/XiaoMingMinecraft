@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @SuppressWarnings("all")
-public class ChannelInteractors extends SimpleListeners<Plugin> {
+public class ChannelListeners extends SimpleListeners<Plugin> {
     @EventListener
     void onMessageEvent(MessageEvent event) {
         final Configuration configuration = plugin.getConfiguration();

@@ -8,8 +8,6 @@ public class VerifyResponse {
     protected VerifyResponse() {}
 
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class Denied extends VerifyResponse {
     }
 
