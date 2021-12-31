@@ -1,0 +1,60 @@
+configuration:
+  contextPrefix: .
+  format:
+    debug:
+      prefix: §8[§1小明§8] §9
+      suffix: ''
+    error:
+      prefix: §8[§4小明§8] §c
+      suffix: ''
+    info:
+      prefix: §8[§3小明§8] §b
+      suffix: ''
+    success:
+      prefix: §8[§2小明§8] §a
+      suffix: ''
+    warn:
+      prefix: §8[§6小明§8] §e
+      suffix: ''
+  maxVariableCount: 10
+  noSuchContext: '[context %s : [0, %d)]'
+  noSuchNode: 缺少语言节点 %s
+messages:
+  net:
+    connect:
+      succeed: '成功连接到小明'
+      failed: '未成功连接到小明'
+    verify:
+      accepted: '成功连接到小明。当前服务器名为 {.0}'
+      denied: '未成功通过验证，请先私聊小明「允许新服务器连接」后使用 /xm connect 再次尝试'
+      confirm:
+        message: '成功连接到小明，但这是初次连接，请在 {.0} 内和小明确认服务器身份。本服的验证码是：{.1}'
+        accepted: '成功向小明确认了本服务器的身份：{.0}'
+        denied: '对方小明拒绝了本服务器的连接'
+        busy: '小明正在迎接新的服务器，稍后再连接吧'
+      timeout: '你没有及时确认服务器特征信息，验证失败'
+      error:
+        exception: '验证服务器身份时出现异常。请将下列信息反馈给插件作者\n{.0}'
+        protocol: '协议错误，当前通讯协议版本：{.0}'
+        timeout: '验证服务器身份超时'
+        cancelled: '操作被取消'
+        algorithm: '本平台上缺少加密所需的 PBKDF2 算法，无法构造连接请求'
+        pbkdf2: '加密服务器凭据时出现错误'
+    reconnect:
+      beforeSleep: '将在 {.0} 秒后进行第 {.1} 次重连...'
+      timeout: '重连超时'
+      outOfBound:
+        total: '已达到最大重连次数 {.0} ，将不再尝试重连'
+        recent: '已达到本次最大重连次数 {.0} ，本次将不再尝试重连'
+      succeed: '成功重连'
+      stopped: '已停止重连操作'
+    disconnect:
+      succeed: '成功断开连接'
+      failed: '未成功断开连接'
+  debug:
+    enabled: '已启动调试模式'
+    disabled: '已关闭调试模式'
+  language:
+    updated: '语言文件已更新'
+  saved: '文件已保存'
+  reloaded: '已重载全部数据'

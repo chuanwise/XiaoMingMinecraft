@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="初次提交">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/XiaoMingMinecraft.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Client.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Configuration.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Plugin.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/VerifyRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/VerifyResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/XMMCProtocol.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/util/PasswordHashUtil.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Channel.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Plugin.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Scope.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Server.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/Configuration.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/ServerInfo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/VerifyInteractors.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/GroupMessageTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/PlayerDeathTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/PlayerExitTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/PlayerJoinTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/PlayerTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/PrivateMessageTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/QQTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/ServerConnectTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/ServerDisconnectTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/ServerTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/ServerWorldTrigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/trigger/Trigger.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/util/Words.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/language.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/plugin.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/cn/chuanwise/xiaoming/minecraft/bukkit/ClientTest.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="useMavenConfig" value="true" />
+      </MavenGeneralSettings>
+    </option>
+    <option name="enabledProfiles">
+      <list>
+        <option value="jdk-11" />
+      </list>
+    </option>
+    <option name="disabledProfiles">
+      <list>
+        <option value="jdk-16" />
+        <option value="jdk-17" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="232iVIXkGFyvzHImCytHEbeXWoM" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="cn.chuanwise.xiaoming.minecraft.util" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="" />
+      <created>1640938605142</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1640938605142</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="初次提交" />
+    <option name="LAST_COMMIT_MESSAGE" value="初次提交" />
+  </component>
+</project>
