@@ -1,6 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
 import cn.chuanwise.mclib.bukkit.BukkitPlugin;
+import cn.chuanwise.mclib.bukkit.Commander;
 import cn.chuanwise.mclib.storage.Language;
 import cn.chuanwise.storage.file.StoredFile;
 import cn.chuanwise.util.ConditionUtil;
@@ -23,6 +24,8 @@ public class Plugin extends BukkitPlugin {
 
     protected Configuration configuration;
     protected Client client;
+
+    protected PluginCommands commands;
 
     @Override
     public void onLoad0() {
@@ -48,7 +51,7 @@ public class Plugin extends BukkitPlugin {
 
         // 尝试自动连接
         if (configuration.connection.autoConnect) {
-            getServer().getScheduler().runTaskAsynchronously(this, () -> {
+            scheduler.runAsyncTask(() -> {
                 final Optional<ChannelFuture> optional = client.connect();
                 if (optional.isEmpty()) {
                     communicator.consoleError("net.connect.failed");
@@ -63,6 +66,16 @@ public class Plugin extends BukkitPlugin {
                 });
             });
         }
+
+        // 注册指令
+        commands = new PluginCommands(this);
+        new Commander(this).commandBuilder()
+                .name("xiaomingminecraft")
+                .aliases("xmmc", "xiaomingmc", "xm")
+                .commands(commands)
+                .build()
+                .register();
+        communicator.setDebug(configuration.debug);
     }
 
     @Override

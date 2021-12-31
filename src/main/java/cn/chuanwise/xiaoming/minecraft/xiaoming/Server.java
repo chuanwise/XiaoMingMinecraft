@@ -1,12 +1,12 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming;
 
-import cn.chuanwise.net.DebugDuplexHandler;
 import cn.chuanwise.net.ProtocolException;
 import cn.chuanwise.net.packet.*;
 import cn.chuanwise.toolkit.box.Box;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.ConditionUtil;
 import cn.chuanwise.util.ObjectUtil;
+import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
 import cn.chuanwise.xiaoming.minecraft.util.PasswordHashUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
@@ -42,8 +42,7 @@ import java.util.function.Predicate;
 public class Server extends PluginObjectImpl<Plugin> {
     protected final ServerBootstrap serverBootstrap = new ServerBootstrap();
 
-    protected NioEventLoopGroup parentExecutors;
-    protected NioEventLoopGroup childExecutors;
+    protected NioEventLoopGroup executors;
 
     protected Channel channel;
     protected List<OnlineClient> onlineClients = new CopyOnWriteArrayList<>();
@@ -62,12 +61,12 @@ public class Server extends PluginObjectImpl<Plugin> {
             final Configuration configuration = plugin.getConfiguration();
             final Configuration.Connection connection = configuration.getConnection();
 
-            final Future<Object> future = parentExecutors.submit(() -> {
+            final Future<Object> future = executors.submit(() -> {
                 verify(ctx);
                 return null;
             });
 
-            parentExecutors.submit(() -> {
+            executors.submit(() -> {
                 try {
                     future.get(connection.getVerifyTimeout(), TimeUnit.MILLISECONDS);
 
@@ -99,8 +98,7 @@ public class Server extends PluginObjectImpl<Plugin> {
                     && Objects.equals(((RequestPacket<?, ?>) x).getPacketType(), XMMCProtocol.REQUEST_VERIFY), connection.getResponseTimeout());
             XMMCProtocol.checkProtocol(packet instanceof RequestPacket);
 
-            @SuppressWarnings("unchecked")
-            final RequestPacket<VerifyRequest, VerifyResponse> verifyRequestPacket = (RequestPacket<VerifyRequest, VerifyResponse>) packet;
+            @SuppressWarnings("unchecked") final RequestPacket<VerifyRequest, VerifyResponse> verifyRequestPacket = (RequestPacket<VerifyRequest, VerifyResponse>) packet;
 
             final VerifyRequest verifyRequest = verifyRequestPacket.getData();
             final String passwordHash = verifyRequest.getPasswordHash();
@@ -129,50 +127,61 @@ public class Server extends PluginObjectImpl<Plugin> {
 
             // 检查目前是否允许新服务器接入
             // 如果不允许就返回错误
-            if (verifyInteractors.isAllowStrangeServerConnect()) {
-                final Optional<VerifyInteractors.MeetingContext> optionalMeetingContext = verifyInteractors.onMeetingActive();
-
-                // 如果此时正在忙碌
-                // 回复忙碌消息
-                if (optionalMeetingContext.isEmpty()) {
-                    plugin.getLogger().info("新服务器连接到小明，但迎新 QQ 忙碌，故拒绝了连接");
-                    ctx.writeAndFlush(new ResponsePacket<>(new VerifyResponse.Confirm.Busy(), 0, 0));
-                    return;
-                }
-                final VerifyInteractors.MeetingContext meetingContext = optionalMeetingContext.get();
-
-                // 回复验证码等信息
-                final long verifyTimeout = connection.getVerifyTimeout();
-                final String verifyCode = meetingContext.getVerifyCode();
-                final VerifyResponse.Confirm verifyResponse = new VerifyResponse.Confirm.Operated(verifyCode, verifyTimeout);
+            if (!verifyInteractors.isAllowStrangeServerConnect()) {
+                final VerifyResponse.Denied verifyResponse = new VerifyResponse.Denied();
                 ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
-                plugin.getLogger().info("新服务器连接到小明，验证码：" + verifyCode + "，正在等待迎新人回应");
 
-                // 启动线程等待结果
-                xiaomingBot.getScheduler().run(() -> {
-                    final Object condition = meetingContext.getCondition();
-                    try {
-                        if (ObjectUtil.wait(condition, verifyTimeout)) {
-                            // 如果等到了结果
-                            ConditionUtil.checkState(meetingContext.isHandled(), "internal error");
-                            accepted = meetingContext.isAccepted();
-                            plugin.getLogger().info("迎新人员" + (accepted ? "批准" : "拒绝") + "了验证码为 " + verifyCode + " 的服务器的连接");
+                plugin.getLogger().info("陌生服务器连接到小明，但因为尚未开启迎新模式，故被拒绝连接");
+                return;
+            }
+            final Optional<VerifyInteractors.MeetingContext> optionalMeetingContext = verifyInteractors.onMeetingActive();
 
-                            if (accepted) {
-                                onlineClients.add(new OnlineClient(Server.this, ctx.channel(), meetingContext.getServerInfo()));
-                            }
-                        } else {
-                            plugin.getLogger().info("迎新超时，已拒绝服务器连接");
-                            meetingContext.deny(xiaomingBot.getCode());
-                        }
-                    } catch (InterruptedException exception) {
-                        plugin.getLogger().error("等待迎新结果被打断");
-                        meetingContext.deny(xiaomingBot.getCode());
-                    } catch (Exception exception) {
-                        plugin.getLogger().error("等待迎新结果时出现异常", exception);
-                        meetingContext.deny(xiaomingBot.getCode());
+            // 如果此时正在忙碌
+            // 回复忙碌消息
+            if (optionalMeetingContext.isEmpty()) {
+                plugin.getLogger().info("新服务器连接到小明，但迎新 QQ 忙碌，故拒绝了连接");
+                ctx.writeAndFlush(new ResponsePacket<>(new VerifyResponse.Confirm.Busy(), 0, 0));
+                return;
+            }
+            final VerifyInteractors.MeetingContext meetingContext = optionalMeetingContext.get();
+
+            // 回复验证码等信息
+            final long verifyTimeout = connection.getVerifyTimeout();
+            final String verifyCode = meetingContext.getVerifyCode();
+            final VerifyResponse.Confirm verifyResponse = new VerifyResponse.Confirm.Operated(verifyCode, verifyTimeout);
+            ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
+            plugin.getLogger().info("新服务器连接到小明，验证码：" + verifyCode + "，正在等待迎新人回应");
+
+            // 启动线程等待结果
+            final Object condition = meetingContext.getCondition();
+            try {
+                if (ObjectUtil.wait(condition, verifyTimeout)) {
+                    // 如果等到了结果
+                    ConditionUtil.checkState(meetingContext.isHandled(), "internal error");
+                    accepted = meetingContext.isAccepted();
+                    plugin.getLogger().info("迎新人员" + (accepted ? "批准" : "拒绝") + "了验证码为 " + verifyCode + " 的服务器的连接");
+
+                    if (accepted) {
+                        serverInfo = meetingContext.getServerInfo();
+                        onlineClients.add(new OnlineClient(Server.this, ctx.channel(), serverInfo));
                     }
-                });
+                } else {
+                    plugin.getLogger().info("迎新超时，已拒绝服务器连接");
+                    meetingContext.deny(xiaomingBot.getCode());
+                }
+            } catch (InterruptedException exception) {
+                plugin.getLogger().error("等待迎新结果被打断");
+                meetingContext.deny(xiaomingBot.getCode());
+            } catch (Exception exception) {
+                plugin.getLogger().error("等待迎新结果时出现异常", exception);
+                meetingContext.deny(xiaomingBot.getCode());
+            } finally {
+                if (accepted) {
+                    final ConfirmRequest.Accepted accepted = new ConfirmRequest.Accepted(serverInfo.getName(), serverInfo.getPassword());
+                    ctx.writeAndFlush(new RequestPacket<>(XMMCProtocol.REQUEST_CONFIRM, accepted, 0));
+                } else {
+                    ctx.writeAndFlush(new RequestPacket<>(XMMCProtocol.REQUEST_CONFIRM, new ConfirmRequest.Denied(), 0));
+                }
             }
         }
 
@@ -211,7 +220,6 @@ public class Server extends PluginObjectImpl<Plugin> {
         setPlugin(plugin);
 
         serverBootstrap.channel(NioServerSocketChannel.class)
-                .group(parentExecutors, childExecutors)
                 .option(ChannelOption.SO_REUSEADDR, true)
                 .childHandler(new ChannelInitializer<>() {
                     @Override
@@ -224,7 +232,8 @@ public class Server extends PluginObjectImpl<Plugin> {
                         pipeline.addLast(new StringDecoder(StandardCharsets.UTF_8));
                         pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
 
-                        pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.INSTANCE));
+                        pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.getInstance()));
+                        pipeline.addLast(new VerifyHandler());
                     }
 
                     @Override
@@ -234,11 +243,12 @@ public class Server extends PluginObjectImpl<Plugin> {
                 });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (!parentExecutors.isTerminated()) {
-                parentExecutors.shutdownGracefully();
+            if (Objects.isNull(executors)) {
+                return;
             }
-            if (!childExecutors.isTerminated()) {
-                childExecutors.shutdownGracefully();
+
+            if (!executors.isTerminated()) {
+                executors.shutdownGracefully();
             }
         }));
     }
@@ -247,17 +257,12 @@ public class Server extends PluginObjectImpl<Plugin> {
         final Configuration configuration = plugin.getConfiguration();
         final Configuration.Connection connection = configuration.getConnection();
 
+        if (Objects.isNull(executors)) {
+            executors = new NioEventLoopGroup(connection.getThreadCount());
+            serverBootstrap.group(executors);
+        }
+
         serverBootstrap.localAddress(connection.getPort());
-
-        if (Objects.nonNull(parentExecutors)) {
-            parentExecutors.shutdownGracefully();
-        }
-        parentExecutors = new NioEventLoopGroup(connection.getParentThreadCount());
-
-        if (Objects.nonNull(childExecutors)) {
-            childExecutors.shutdownGracefully();
-        }
-        childExecutors = new NioEventLoopGroup(connection.getChildThreadCount());
     }
 
     public boolean isBound() {
@@ -290,8 +295,6 @@ public class Server extends PluginObjectImpl<Plugin> {
         }
 
         final ChannelFuture closeFuture = channel.close();
-        parentExecutors = null;
-        childExecutors = null;
 
         return Optional.of(closeFuture);
     }

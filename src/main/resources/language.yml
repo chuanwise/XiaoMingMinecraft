@@ -24,9 +24,10 @@ messages:
     connect:
       succeed: '成功连接到小明'
       failed: '未成功连接到小明'
+      multi: '已经连接到小明了，无需再次连接'
     verify:
       accepted: '成功连接到小明。当前服务器名为 {.0}'
-      denied: '未成功通过验证，请先私聊小明「允许新服务器连接」后使用 /xm connect 再次尝试'
+      denied: '未成功通过验证，请先私聊小明「迎接新服务器」后使用 /xm connect 再次尝试'
       confirm:
         message: '成功连接到小明，但这是初次连接，请在 {.0} 内和小明确认服务器身份。本服的验证码是：{.1}'
         accepted: '成功向小明确认了本服务器的身份：{.0}'
@@ -47,10 +48,11 @@ messages:
         total: '已达到最大重连次数 {.0} ，将不再尝试重连'
         recent: '已达到本次最大重连次数 {.0} ，本次将不再尝试重连'
       succeed: '成功重连'
-      stopped: '已停止重连操作'
+      failed: '未成功重连'
     disconnect:
       succeed: '成功断开连接'
       failed: '未成功断开连接'
+      multi: '尚未连接到小明，无需断连'
   debug:
     enabled: '已启动调试模式'
     disabled: '已关闭调试模式'

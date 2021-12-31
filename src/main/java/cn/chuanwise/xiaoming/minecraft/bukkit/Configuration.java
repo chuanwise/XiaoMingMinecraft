@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 @Data
 public class Configuration extends StoredFile {
+    boolean debug = false;
+
     @Data
     public static class Connection {
         boolean autoConnect = true;

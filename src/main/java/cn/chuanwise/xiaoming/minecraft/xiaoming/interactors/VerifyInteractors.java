@@ -92,6 +92,8 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
     void waiting(XiaomingUser user) {
         if (Objects.isNull(strangeServerWaiter)) {
             strangeServerWaiter = user;
+            user.sendMessage("成功在当前会话下允许新服务器接入");
+            meetingContext = null;
         } else {
             if (strangeServerWaiter.getCode() == user.getCode()) {
                 if (strangeServerWaiter == user) {

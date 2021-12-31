@@ -8,9 +8,15 @@ import cn.chuanwise.net.packet.RequestPacketType;
 
 /** XMMC 通讯协议 */
 public class XMMCProtocol extends Protocol {
-    public static final XMMCProtocol INSTANCE = new XMMCProtocol();
+    private static class Internal {
+        private static final XMMCProtocol INSTANCE = new XMMCProtocol();
+    }
+    public static XMMCProtocol getInstance() {
+        return Internal.INSTANCE;
+    }
+
     private XMMCProtocol() {
-        registerStaticMessageTypes(getClass());
+        registerStaticMessageTypes(XMMCProtocol.class);
         registerStaticMessageTypes(NetLibProtocol.class);
     }
 

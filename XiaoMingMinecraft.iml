@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="WiseToolkitGeneric" />
     <orderEntry type="library" name="Maven: com.alibaba:fastjson:1.2.78" level="project" />
     <orderEntry type="module" module-name="McLibCore" />
+    <orderEntry type="module" module-name="CommandLib" />
     <orderEntry type="module" module-name="WiseToolkitNetty" />
     <orderEntry type="module" module-name="WiseToolkitNet" />
     <orderEntry type="library" name="Maven: io.netty:netty-all:4.1.66.Final" level="project" />

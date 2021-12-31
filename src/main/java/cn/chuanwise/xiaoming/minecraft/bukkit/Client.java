@@ -56,10 +56,6 @@ public class Client extends BukkitPluginObject<Plugin> {
 
     @Getter(AccessLevel.NONE)
     private final Object verifyCondition = new Object();
-    protected volatile boolean accepted = false;
-
-    @Getter(AccessLevel.NONE)
-    protected volatile boolean manual = false;
 
     protected volatile String name;
 
@@ -67,20 +63,23 @@ public class Client extends BukkitPluginObject<Plugin> {
     @ChannelHandler.Sharable
     protected class VerifyHandler extends SimpleChannelInboundHandler<Packet> {
         protected final Box<Packet> msgBox = Box.empty();
+        protected volatile boolean accepted = false;
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            manual = false;
-
             // 启动验证线程和验证等待线程
             final Future<Object> future = executors.submit(() -> {
+                Thread.sleep(plugin.configuration.connection.responseDelay);
                 verify(ctx);
                 return null;
             });
 
+            log().debug("channel active, and submit task waiting for verifying");
             executors.submit(() -> {
                 try {
+                    log().debug("waiting for verifying...");
                     future.get(plugin.configuration.connection.verifyTimeout, TimeUnit.MILLISECONDS);
+                    log().debug("verify result: accepted = " + accepted);
                 } catch (InterruptedException e) {
                     communicator().consoleInfo("net.verify.error.cancelled");
                 } catch (ExecutionException e) {
@@ -102,11 +101,7 @@ public class Client extends BukkitPluginObject<Plugin> {
                 } finally {
                     ctx.pipeline().remove(VerifyHandler.this);
                     if (!accepted) {
-                        if (manual) {
-                            disconnectManually();
-                        } else {
-                            disconnect();
-                        }
+                        disconnect();
                     } else {
                         ctx.pipeline().addLast(packetService);
                     }
@@ -148,7 +143,7 @@ public class Client extends BukkitPluginObject<Plugin> {
             // 构造验证请求并发送，得到回应
             final Optional<VerifyResponse> optionalVerifyResponse = requestVerify(ctx);
             if (optionalVerifyResponse.isEmpty()) {
-                manual = true;
+                reconnectHandler.setStopToReconnect(true);
                 return;
             }
             final VerifyResponse verifyResponse = optionalVerifyResponse.get();
@@ -163,7 +158,7 @@ public class Client extends BukkitPluginObject<Plugin> {
             }
             if (verifyResponse instanceof VerifyResponse.Denied) {
                 communicator().consoleWarn("net.verify.denied");
-                manual = true;
+                reconnectHandler.setStopToReconnect(true);
                 return;
             }
 
@@ -173,7 +168,8 @@ public class Client extends BukkitPluginObject<Plugin> {
             if (verifyResponse instanceof VerifyResponse.Confirm) {
                 final VerifyResponse.Confirm confirm = (VerifyResponse.Confirm) verifyResponse;
                 if (verifyResponse instanceof VerifyResponse.Confirm.Busy) {
-                    communicator().consoleSuccess("net.verify.confirm.busy");
+                    communicator().consoleWarn("net.verify.confirm.busy");
+                    reconnectHandler.setStopToReconnect(true);
                     return;
                 }
                 final VerifyResponse.Confirm.Operated operated = (VerifyResponse.Confirm.Operated) confirm;
@@ -197,14 +193,14 @@ public class Client extends BukkitPluginObject<Plugin> {
                     communicator().consoleSuccess("net.verify.confirm.denied");
                 } else if (confirmRequest instanceof ConfirmRequest.Accepted) {
                     final ConfirmRequest.Accepted accepted = (ConfirmRequest.Accepted) confirmRequest;
-                    Client.this.accepted = true;
+                    this.accepted = true;
                     communicator().consoleSuccess("net.verify.confirm.accepted", accepted.getName());
                     configuration.connection.setPassword(accepted.getPassword());
                     configuration.save();
                 }
 
                 // 稍后再回复
-                final boolean finalAccepted = Client.this.accepted;
+                final boolean finalAccepted = this.accepted;
                 executors.schedule(() -> ctx.writeAndFlush(
                         new ResponsePacket<>(finalAccepted, confirmRequestPacket.getPacketCode(), 0)), connection.responseDelay, TimeUnit.MILLISECONDS);
             }
@@ -246,21 +242,18 @@ public class Client extends BukkitPluginObject<Plugin> {
 
         setupConfiguration();
 
-        reconnectHandler.setOnStopReconnecting(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("reconnect.stopped"));
-        });
         reconnectHandler.setOnReconnectSuccessfully(() -> {
-            consoleSender().sendMessage(language().formatSuccessNode("reconnect.succeed"));
+            consoleSender().sendMessage(language().formatSuccessNode("net.reconnect.succeed"));
         });
         reconnectHandler.setOnOutOfTotalReconnectBound(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("reconnect.outOfBound.total", reconnectHandler.getMaxTotalReconnectFailCount()));
+            consoleSender().sendMessage(language().formatWarnNode("net.reconnect.outOfBound.total", reconnectHandler.getMaxTotalReconnectFailCount()));
         });
         reconnectHandler.setOnOutOfRecentReconnectBound(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("reconnect.outOfBound.recent", reconnectHandler.getMaxRecentReconnectFailCount()));
+            consoleSender().sendMessage(language().formatWarnNode("net.reconnect.outOfBound.recent", reconnectHandler.getMaxRecentReconnectFailCount()));
         });
         reconnectHandler.setOnReconnectException(throwable -> { });
         reconnectHandler.setOnBeforeNextReconnectSleep(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("reconnect.beforeSleep", TimeUnit.MILLISECONDS.toSeconds(reconnectHandler.getNextReconnectDelay()), reconnectHandler.getRecentReconnectFailCount() + 1));
+            consoleSender().sendMessage(language().formatWarnNode("net.reconnect.beforeSleep", TimeUnit.MILLISECONDS.toSeconds(reconnectHandler.getNextReconnectDelay()), reconnectHandler.getRecentReconnectFailCount() + 1));
         });
 
         bootstrap.group(executors)
@@ -277,8 +270,8 @@ public class Client extends BukkitPluginObject<Plugin> {
                         pipeline.addLast(new StringDecoder(StandardCharsets.UTF_8));
                         pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
 
-                        pipeline.addLast(new DebugDuplexHandler("debug"));
-                        pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.INSTANCE));
+                        pipeline.addLast(new DebugDuplexHandler(communicator().toLogger()));
+                        pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.getInstance()));
 
                         pipeline.addLast(new VerifyHandler());
                         pipeline.addLast(reconnectHandler);
@@ -286,6 +279,9 @@ public class Client extends BukkitPluginObject<Plugin> {
                 });
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (Objects.isNull(executors)) {
+                return;
+            }
             if (executors.isTerminated()) {
                 return;
             }
@@ -306,10 +302,9 @@ public class Client extends BukkitPluginObject<Plugin> {
         reconnectHandler.setBaseReconnectDelay(connection.getBaseReconnectDelay());
         reconnectHandler.setDeltaReconnectDelay(connection.getDeltaReconnectDelay());
 
-        if (Objects.nonNull(executors)) {
-            executors.shutdownGracefully();
+        if (Objects.isNull(executors)) {
+            executors = new NioEventLoopGroup(connection.threadCount);
         }
-        executors = new NioEventLoopGroup(connection.threadCount);
     }
 
     public Optional<ChannelFuture> connect() {
@@ -324,10 +319,6 @@ public class Client extends BukkitPluginObject<Plugin> {
 
         final ChannelFuture channelFuture = bootstrap.connect();
         this.channel = channelFuture.channel();
-
-        channel.closeFuture().addListener(x -> {
-            accepted = false;
-        });
 
         return Optional.of(channelFuture);
     }
@@ -351,9 +342,6 @@ public class Client extends BukkitPluginObject<Plugin> {
         if (!isConnected()) {
             return Optional.empty();
         }
-
-        reconnectHandler.stopReconnecting();
-        reconnectHandler.setStopToReconnect(false);
 
         return Optional.of(channel.disconnect());
     }

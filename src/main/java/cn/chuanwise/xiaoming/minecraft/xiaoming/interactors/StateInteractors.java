@@ -34,7 +34,12 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
             return;
         }
         final List<OnlineClient> onlineClients = server.getOnlineClients();
-
+        if (onlineClients.isEmpty()) {
+            user.sendError("目前没有任何服务器在线");
+        } else {
+            user.sendMessage("目前有 " + onlineClients.size() + " 个服务器在线：" +
+                    CollectionUtil.toString(onlineClients, x -> x.getServerInfo().getName()));
+        }
     }
 
     @Filter(Words.DISCONNECT + Words.SERVER + " {服务器名}")

@@ -25,8 +25,7 @@ public class Configuration extends SimplePreservable<Plugin> {
 
         long verifyTimeout = TimeUnit.MINUTES.toMillis(10);
 
-        int parentThreadCount = 10;
-        int childThreadCount = 10;
+        int threadCount = 10;
     }
     Connection connection = new Connection();
 

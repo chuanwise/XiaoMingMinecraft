@@ -111,4 +111,6 @@ fabric.properties
 
 # vsdx
 *.vsdx
-*.bat
+fast-do-all.bat
+fast-do-bukkit.bat
+fast-do-xiaoming.bat

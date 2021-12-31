@@ -20,9 +20,8 @@ import java.util.Objects;
 @Getter
 @SuppressWarnings("all")
 public class Plugin extends JavaPlugin {
-    protected static Plugin INSTANCE;
+    protected static final Plugin INSTANCE = new Plugin();
     public static Plugin getInstance() {
-        ConditionUtil.notNull(INSTANCE, "instance");
         return INSTANCE;
     }
 
@@ -64,7 +63,7 @@ public class Plugin extends JavaPlugin {
         // 注册交互器
         xiaomingBot.getInteractorManager().registerInteractors(new ConnectionInteractors(), this);
         xiaomingBot.getInteractorManager().registerInteractors(new StateInteractors(), this);
-        xiaomingBot.getInteractorManager().registerInteractors(new VerifyInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(verifyInteractors, this);
     }
 
     @Override
