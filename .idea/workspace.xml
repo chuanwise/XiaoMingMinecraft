@@ -4,31 +4,29 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="添加插件启动信息">
+    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="完善连接模块">
       <change afterPath="$PROJECT_DIR$/fast-do-all.bat" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/fast-do-bukkit.bat" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/fast-do-xiaoming.bat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/PluginCommands.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/XiaoMingMinecraft.iml" beforeDir="false" afterPath="$PROJECT_DIR$/XiaoMingMinecraft.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Configuration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Configuration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Plugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/Plugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/XMMCProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/XMMCProtocol.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Plugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Plugin.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/Configuration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/Configuration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/StateInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/StateInteractors.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/VerifyInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/VerifyInteractors.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/language.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/xiaoming.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/xiaoming.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/Channel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/Channel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/GroupMessageTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/GroupMessageTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/PrivateMessageTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/PrivateMessageTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/QQMessageTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/QQMessageTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/QQTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/QQTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/Trigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/Trigger.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -100,7 +98,14 @@
       <option name="project" value="LOCAL" />
       <updated>1640960768969</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="完善连接模块">
+      <created>1640970624961</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1640970624961</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -117,6 +122,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="初次提交" />
     <MESSAGE value="添加插件启动信息" />
-    <option name="LAST_COMMIT_MESSAGE" value="添加插件启动信息" />
+    <MESSAGE value="完善连接模块" />
+    <option name="LAST_COMMIT_MESSAGE" value="完善连接模块" />
   </component>
 </project>

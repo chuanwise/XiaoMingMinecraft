@@ -1,4 +1,4 @@
-package cn.chuanwise.xiaoming.minecraft.bukkit;
+package cn.chuanwise.xiaoming.minecraft.bukkit.net;
 
 import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
 import cn.chuanwise.mclib.net.bukkit.BukkitLocalContact;
@@ -10,6 +10,8 @@ import cn.chuanwise.toolkit.box.Box;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.ThrowableUtil;
 import cn.chuanwise.util.TimeUtil;
+import cn.chuanwise.xiaoming.minecraft.bukkit.Configuration;
+import cn.chuanwise.xiaoming.minecraft.bukkit.Plugin;
 import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
@@ -45,7 +47,8 @@ public class Client extends BukkitPluginObject<Plugin> {
     protected NettyPacketService packetService = new NettyPacketService();
 
     /** 本地会话处理器 */
-    protected final BukkitLocalContact<Plugin> contact = new BukkitLocalContact<>(packetService, log(), plugin);
+    protected final BukkitLocalContact<Plugin> netLibContact = new BukkitLocalContact<>(packetService, log(), plugin);
+    protected final XMMCClientContact clientContact = new XMMCClientContact(plugin, packetService);
 
     /** 重连工具 */
     protected final ReconnectHandler reconnectHandler = new ReconnectHandler(bootstrap);

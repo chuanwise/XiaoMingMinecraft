@@ -13,4 +13,21 @@ import java.util.Set;
 @Data
 public class PrivateMessageTrigger extends QQMessageTrigger {
     Set<Long> accountCodes = new HashSet<>();
+
+    @Override
+    protected List<String> handle0(MessageEvent event) {
+        final XiaomingUser user = event.getUser();
+        if (!(user instanceof PrivateXiaomingUser)) {
+            return Collections.emptyList();
+        }
+
+        if (accountCodes.isEmpty()) {
+            return messages;
+        }
+        final long accountCode = user.getCode();
+        if (accountCodes.contains(accountCode)) {
+            return messages;
+        }
+        return Collections.emptyList();
+    }
 }

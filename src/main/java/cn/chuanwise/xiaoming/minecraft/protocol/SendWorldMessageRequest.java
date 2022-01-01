@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -12,5 +14,5 @@ import java.util.Set;
 @NoArgsConstructor
 public class SendWorldMessageRequest {
     Set<String> worldNames = new HashSet<>();
-    Set<String> messages = new HashSet<>();
+    List<String> messages = new ArrayList<>();
 }

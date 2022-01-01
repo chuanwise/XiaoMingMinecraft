@@ -1,5 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
+import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;

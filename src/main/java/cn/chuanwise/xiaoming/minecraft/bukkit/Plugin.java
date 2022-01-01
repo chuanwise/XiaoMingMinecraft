@@ -5,6 +5,7 @@ import cn.chuanwise.mclib.bukkit.Commander;
 import cn.chuanwise.mclib.storage.Language;
 import cn.chuanwise.storage.file.StoredFile;
 import cn.chuanwise.util.ConditionUtil;
+import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
 import io.netty.channel.ChannelFuture;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
@@ -47,7 +48,7 @@ public class Plugin extends BukkitPlugin {
         client = new Client(this);
 
         // 注册监听器
-        registerListeners(client.contact);
+        registerListeners(client.getNetLibContact());
 
         // 尝试自动连接
         if (configuration.connection.autoConnect) {

@@ -6,10 +6,10 @@ import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.OnlineClient;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Server;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.Configuration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
@@ -58,7 +58,7 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.SERVER)
     @Required("xmmc.admin.server.list")
     void listServers(XiaomingUser user) {
-        final Map<String, ServerInfo> servers = plugin.getConfiguration().getServers();
+        final Map<String, ServerInfo> servers = plugin.getPluginConfiguration().getServers();
         if (servers.isEmpty()) {
             user.sendError("小明还不认识任何服务器");
         } else {
@@ -70,9 +70,9 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.REMOVE + Words.SERVER + " {服务器名}")
     @Required("xmmc.admin.server.remove")
     void removeServer(XiaomingUser user, @FilterParameter("服务器名") ServerInfo serverInfo) {
-        final Configuration configuration = plugin.getConfiguration();
-        configuration.getServers().remove(serverInfo.getName());
-        configuration.readyToSave();
+        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
+        pluginConfiguration.getServers().remove(serverInfo.getName());
+        pluginConfiguration.readyToSave();
 
         // 尝试断开
         final Server server = getServer();

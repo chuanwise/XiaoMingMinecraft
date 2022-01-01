@@ -2,6 +2,7 @@ package cn.chuanwise.xiaoming.minecraft.bukkit;
 
 import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
 import cn.chuanwise.mclib.bukkit.OnCommand;
+import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
 import org.bukkit.command.CommandSender;
 
 import java.io.IOException;

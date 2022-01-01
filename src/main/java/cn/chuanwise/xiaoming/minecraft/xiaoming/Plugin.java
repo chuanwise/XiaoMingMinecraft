@@ -2,16 +2,18 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming;
 
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.ConditionUtil;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.Configuration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ChannelConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.ConnectionInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.StateInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.VerifyInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.listeners.ChannelListeners;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.plugin.JavaPlugin;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
-import io.netty.channel.ChannelFuture;
 import lombok.Getter;
 
 import java.io.File;
@@ -25,8 +27,12 @@ public class Plugin extends JavaPlugin {
         return INSTANCE;
     }
 
-    protected Configuration configuration;
+    protected PluginConfiguration pluginConfiguration;
+    protected PlayerConfiguration playerConfiguration;
+    protected ChannelConfiguration channelConfiguration;
+
     protected VerifyInteractors verifyInteractors;
+
     protected Server server;
 
     @Override
@@ -34,20 +40,24 @@ public class Plugin extends JavaPlugin {
         final File dataFolder = getDataFolder();
         dataFolder.mkdirs();
 
-        configuration = loadConfigurationOrSupply(Configuration.class, Configuration::new);
+        pluginConfiguration = loadConfigurationOrSupply(PluginConfiguration.class, PluginConfiguration::new);
+        playerConfiguration = loadFileOrSupply(PlayerConfiguration.class, new File(dataFolder, "players.json"), PlayerConfiguration::new);
+        channelConfiguration = loadFileOrSupply(ChannelConfiguration.class, new File(dataFolder, "channels.json"), ChannelConfiguration::new);
+
         verifyInteractors = new VerifyInteractors();
+
         server = new Server(this);
     }
 
     @Override
     public void onEnable() {
         // 启动服务器
-        if (configuration.getConnection().isAutoBind()) {
+        if (pluginConfiguration.getConnection().isAutoBind()) {
             server.bind()
                     .orElseThrow()
                     .addListener(x -> {
                         if (x.isSuccess()) {
-                            getLogger().info("成功在端口 " + configuration.getConnection().getPort() + " 上启动服务器");
+                            getLogger().info("成功在端口 " + pluginConfiguration.getConnection().getPort() + " 上启动服务器");
                         } else {
                             getLogger().info("启动服务器失败");
                         }
@@ -70,7 +80,7 @@ public class Plugin extends JavaPlugin {
     public void onDisable() {
         server.unbind().ifPresent(x -> x.addListener(y -> {
             if (y.isSuccess()) {
-                getLogger().info("成功关闭在端口 " + configuration.getConnection().getPort() + " 上的服务器");
+                getLogger().info("成功关闭在端口 " + pluginConfiguration.getConnection().getPort() + " 上的服务器");
             } else {
                 getLogger().info("关闭服务器失败");
             }
@@ -101,7 +111,7 @@ public class Plugin extends JavaPlugin {
             final XiaomingUser user = context.getUser();
             final String inputValue = context.getInputValue();
 
-            final ServerInfo serverInfo = configuration.getServers().get(inputValue);
+            final ServerInfo serverInfo = pluginConfiguration.getServers().get(inputValue);
             if (Objects.isNull(serverInfo)) {
                 user.sendError("小明还不认识服务器「" + inputValue + "」");
                 return null;

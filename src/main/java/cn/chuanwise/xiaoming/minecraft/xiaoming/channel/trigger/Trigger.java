@@ -1,10 +1,9 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger;
 
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.internal.TypeParameterMatcher;
-import lombok.AccessLevel;
+import cn.chuanwise.util.ClassUtil;
+import cn.chuanwise.util.ConditionUtil;
+import cn.chuanwise.xiaoming.event.MessageEvent;
 import lombok.Data;
-import lombok.Getter;
 
 import java.beans.Transient;
 import java.util.ArrayList;
@@ -12,17 +11,33 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
-public abstract class Trigger {
+public abstract class Trigger<T> {
+    protected transient final Class<T> handledClass;
+
+    @Transient
+    public Class<T> getHandledClass() {
+        return handledClass;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public Trigger() {
+        this.handledClass = (Class) ClassUtil.getOnlyTypeParameterClass(getClass(), Trigger.class);
+    }
+
+    public Trigger(Class<T> handledClass) {
+        ConditionUtil.notNull(handledClass, "handled class");
+        this.handledClass = handledClass;
+    }
+
     protected final List<String> messages = new ArrayList<>();
 
-    @Getter(AccessLevel.NONE)
-    protected transient final TypeParameterMatcher matcher;
-    @Transient
-    protected TypeParameterMatcher getMatcher() {
-        return matcher;
+    @SuppressWarnings("unchecked")
+    public final List<String> handle(Object t) {
+        if (!handledClass.isInstance(t.getClass())) {
+            return Collections.emptyList();
+        }
+        return handle0((T) t);
     }
 
-    public Trigger() {
-        this.matcher = TypeParameterMatcher.find(this, Trigger.class, "T");
-    }
+    protected abstract List<String> handle0(T t);
 }

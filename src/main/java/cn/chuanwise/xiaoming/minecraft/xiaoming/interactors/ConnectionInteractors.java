@@ -4,8 +4,8 @@ import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Server;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.Configuration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
 
@@ -15,7 +15,7 @@ public class ConnectionInteractors extends SimpleInteractors<Plugin> {
     @Required("xmmc.admin.server.enable")
     void enableServer(XiaomingUser user) {
         final Server server = plugin.getServer();
-        final Configuration.Connection connection = plugin.getConfiguration().getConnection();
+        final PluginConfiguration.Connection connection = plugin.getPluginConfiguration().getConnection();
         if (server.isBound()) {
             user.sendError("服务器已经启动了！");
             return;

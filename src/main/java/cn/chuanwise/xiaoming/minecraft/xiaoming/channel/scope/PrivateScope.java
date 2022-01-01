@@ -5,6 +5,7 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
 import lombok.Data;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -12,8 +13,8 @@ public class PrivateScope extends Scope {
     Set<Long> accountCodes = new HashSet<>();
 
     @Override
-    public void sendMessage(Plugin plugin, String message) {
-        accountCodes.forEach(x -> plugin.getXiaomingBot().getContactManager().sendPrivateMessagePossibly(x, message));
+    public void sendMessage(Plugin plugin, List<String> messages) {
+        accountCodes.forEach(x -> messages.forEach(y -> plugin.getXiaomingBot().getContactManager().sendPrivateMessagePossibly(x, y)));
     }
 
     @Override

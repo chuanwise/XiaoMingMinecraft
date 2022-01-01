@@ -1,4 +1,4 @@
-package cn.chuanwise.xiaoming.minecraft.xiaoming;
+package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
 import cn.chuanwise.net.ProtocolException;
 import cn.chuanwise.net.packet.*;
@@ -11,7 +11,8 @@ import cn.chuanwise.xiaoming.minecraft.util.PasswordHashUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
 import cn.chuanwise.xiaoming.minecraft.protocol.XMMCProtocol;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.Configuration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.VerifyInteractors;
 import cn.chuanwise.xiaoming.object.PluginObjectImpl;
@@ -58,8 +59,8 @@ public class Server extends PluginObjectImpl<Plugin> {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            final Configuration configuration = plugin.getConfiguration();
-            final Configuration.Connection connection = configuration.getConnection();
+            final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
+            final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
 
             final Future<Object> future = executors.submit(() -> {
                 verify(ctx);
@@ -91,8 +92,8 @@ public class Server extends PluginObjectImpl<Plugin> {
 
         protected void verify(ChannelHandlerContext ctx) throws Exception {
             // 服务器端会发送 XMMCProtocol.REQUEST_VERIFY 类型的包
-            final Configuration configuration = plugin.configuration;
-            final Configuration.Connection connection = configuration.getConnection();
+            final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
+            final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
 
             final Packet packet = nextPacket(x -> x instanceof RequestPacket
                     && Objects.equals(((RequestPacket<?, ?>) x).getPacketType(), XMMCProtocol.REQUEST_VERIFY), connection.getResponseTimeout());
@@ -105,7 +106,7 @@ public class Server extends PluginObjectImpl<Plugin> {
 
             // 寻找使用此密码的服务器
             ServerInfo serverInfo = null;
-            for (ServerInfo info : configuration.getServers().values()) {
+            for (ServerInfo info : pluginConfiguration.getServers().values()) {
                 if (PasswordHashUtil.validatePassword(info.getPassword(), passwordHash)) {
                     serverInfo = info;
                     break;
@@ -254,8 +255,8 @@ public class Server extends PluginObjectImpl<Plugin> {
     }
 
     public void setupConfiguration() {
-        final Configuration configuration = plugin.getConfiguration();
-        final Configuration.Connection connection = configuration.getConnection();
+        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
+        final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
 
         if (Objects.isNull(executors)) {
             executors = new NioEventLoopGroup(connection.getThreadCount());

@@ -1,6 +1,5 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.util.ConditionUtil;
 import cn.chuanwise.util.StringUtil;
 import cn.chuanwise.util.TimeUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
@@ -11,16 +10,14 @@ import cn.chuanwise.xiaoming.exception.InteractInterrtuptedException;
 import cn.chuanwise.xiaoming.exception.InteractTimeoutException;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.Configuration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
 import lombok.Getter;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 public class VerifyInteractors extends SimpleInteractors<Plugin> {
@@ -141,8 +138,8 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
             return Optional.empty();
         }
 
-        final Configuration configuration = plugin.getConfiguration();
-        final Configuration.Generator.RandomStringGenerator verifyCodeGenerator = configuration.getGenerator().getVerifyCode();
+        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
+        final PluginConfiguration.Generator.SingleGenerator verifyCodeGenerator = pluginConfiguration.getGenerator().getVerifyCode();
 
         final String verifyCode = StringUtil.randomString(verifyCodeGenerator.getCharacters(), verifyCodeGenerator.getLength());
         meetingContext = new MeetingContext(verifyCode);
@@ -151,7 +148,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
         xiaomingBot.getScheduler().run(() -> {
             // 通知有人连接了
             final XiaomingUser user = this.strangeServerWaiter;
-            final long timeout = configuration.getConnection().getVerifyTimeout();
+            final long timeout = pluginConfiguration.getConnection().getVerifyTimeout();
             final String timeoutLength = TimeUtil.toTimeLength(timeout);
 
             user.sendMessage("有新的服务器接入，这是你的服务器吗？\n" +
@@ -166,7 +163,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
                     String name = null;
                     while (true) {
                         name = user.nextMessageOrExit().serialize();
-                        if (Objects.nonNull(configuration.getServers().get(name))) {
+                        if (Objects.nonNull(pluginConfiguration.getServers().get(name))) {
                             user.sendError("已经有叫这个名字的服务器了，换个名字再输入一次吧！");
                         } else {
                             break;
@@ -175,10 +172,10 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
 
                     final ServerInfo serverInfo = new ServerInfo();
                     serverInfo.setName(name);
-                    configuration.getServers().put(name, serverInfo);
+                    pluginConfiguration.getServers().put(name, serverInfo);
 
                     // 生成随机密码
-                    final Configuration.Generator.RandomStringGenerator passwordGenerator = configuration.getGenerator().getPassword();
+                    final PluginConfiguration.Generator.SingleGenerator passwordGenerator = pluginConfiguration.getGenerator().getPassword();
                     final String password = StringUtil.randomString(passwordGenerator.getCharacters(), passwordGenerator.getLength());
                     serverInfo.setPassword(password);
 
