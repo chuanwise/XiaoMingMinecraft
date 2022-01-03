@@ -4,12 +4,15 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.Scope;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.Trigger;
 import lombok.Data;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Data
 public class Channel {
     String name;
     Set<Scope> scopes = new HashSet<>();
-    Set<Trigger<?>> triggers = new HashSet<>();
+    Map<String, Trigger<?>> triggers = new HashMap<>();
+
+    public Optional<Trigger<?>> getTrigger(String name) {
+        return Optional.ofNullable(triggers.get(name));
+    }
 }

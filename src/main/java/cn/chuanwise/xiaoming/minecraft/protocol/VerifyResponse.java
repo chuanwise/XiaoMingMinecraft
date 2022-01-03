@@ -12,6 +12,9 @@ public class VerifyResponse {
     }
 
     @Data
+    public static class Conflict extends VerifyResponse {}
+
+    @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Accepted extends VerifyResponse {

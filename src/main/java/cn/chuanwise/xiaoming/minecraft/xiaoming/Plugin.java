@@ -1,15 +1,15 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming;
 
+import cn.chuanwise.api.Logger;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ChannelConfiguration;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.ConnectionInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.StateInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.VerifyInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.listeners.ChannelListeners;
+import cn.chuanwise.xiaoming.language.LanguageManager;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.Channel;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.Scope;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.Trigger;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.*;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.*;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.listeners.TriggerListeners;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.plugin.JavaPlugin;
@@ -17,7 +17,9 @@ import cn.chuanwise.xiaoming.user.XiaomingUser;
 import lombok.Getter;
 
 import java.io.File;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 @Getter
 @SuppressWarnings("all")
@@ -34,6 +36,7 @@ public class Plugin extends JavaPlugin {
     protected VerifyInteractors verifyInteractors;
 
     protected Server server;
+    protected Logger log;
 
     @Override
     public void onLoad() {
@@ -44,9 +47,33 @@ public class Plugin extends JavaPlugin {
         playerConfiguration = loadFileOrSupply(PlayerConfiguration.class, new File(dataFolder, "players.json"), PlayerConfiguration::new);
         channelConfiguration = loadFileOrSupply(ChannelConfiguration.class, new File(dataFolder, "channels.json"), ChannelConfiguration::new);
 
+        log = new Logger() {
+            @Override
+            public void debug(String message) {
+                if (pluginConfiguration.isDebug()) {
+                    getLogger().info(message);
+                }
+            }
+
+            @Override
+            public void error(String message) {
+                getLogger().error(message);
+            }
+
+            @Override
+            public void info(String message) {
+                getLogger().info(message);
+            }
+
+            @Override
+            public void warn(String message) {
+                getLogger().warn(message);
+            }
+        };
         verifyInteractors = new VerifyInteractors();
 
         server = new Server(this);
+        final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
     }
 
     @Override
@@ -54,7 +81,7 @@ public class Plugin extends JavaPlugin {
         // 启动服务器
         if (pluginConfiguration.getConnection().isAutoBind()) {
             server.bind()
-                    .orElseThrow()
+                    .orElseThrow(NoSuchElementException::new)
                     .addListener(x -> {
                         if (x.isSuccess()) {
                             getLogger().info("成功在端口 " + pluginConfiguration.getConnection().getPort() + " 上启动服务器");
@@ -64,16 +91,19 @@ public class Plugin extends JavaPlugin {
                     });
         }
 
-        // 注册监听器
-        xiaomingBot.getEventManager().registerListeners(new ChannelListeners(), this);
-
         // 注册交互器参数解析器
         registerParameterParsers();
 
         // 注册交互器
         xiaomingBot.getInteractorManager().registerInteractors(new ConnectionInteractors(), this);
         xiaomingBot.getInteractorManager().registerInteractors(new StateInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(new ChannelInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(new CommandInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(new AccountInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(new ConfigurationInteractors(), this);
         xiaomingBot.getInteractorManager().registerInteractors(verifyInteractors, this);
+
+        xiaomingBot.getEventManager().registerListeners(new TriggerListeners(), this);
     }
 
     @Override
@@ -100,7 +130,7 @@ public class Plugin extends JavaPlugin {
                     x -> Objects.equals(x.getServerInfo().getName(), inputValue));
 
             if (optionalOnlineClient.isEmpty()) {
-                user.sendError("服务器" + inputValue + "并未连接到小明！");
+                user.sendError("「" + inputValue + "」并未连接到小明！");
                 return null;
             }
 
@@ -119,5 +149,34 @@ public class Plugin extends JavaPlugin {
 
             return Container.of(serverInfo);
         }, true, this);
+
+        xiaomingBot.getInteractorManager().registerThrowableCaughter(TimeoutException.class, (context, throwable) -> {
+            final XiaomingUser user = context.getUser();
+            user.sendError("请求超时");
+        }, false,  this);
+
+        final LanguageManager languageManager = xiaomingBot.getLanguageManager();
+        languageManager.registerConvertor(Channel.class, Channel::getName, this);
+        languageManager.registerOperators(Channel.class, this)
+                .addOperator("name", Channel::getName)
+                .addOperator("trigger", Channel::getTriggers)
+                .addOperator("scope", Channel::getScopes);
+
+        languageManager.registerConvertor(Trigger.class, Trigger::getName, this);
+        languageManager.registerOperators(Trigger.class, this)
+                .addOperator("name", Trigger::getName)
+                .addOperator("description", Trigger::getDescription);
+
+        languageManager.registerConvertor(Scope.class, Scope::getDescription, this);
+
+        languageManager.registerOperators(ServerInfo.class, this)
+                .addOperator("name", ServerInfo::getName);
+        languageManager.registerConvertor(ServerInfo.class, ServerInfo::getName, this);
+
+        languageManager.registerOperators(PlayerInfo.class, this)
+                .addOperator("names", PlayerInfo::getPlayerNames)
+                .addOperator("codes", PlayerInfo::getAccountCodes)
+                .addOperator("name", x -> x.getPlayerNames().get(0));
+        languageManager.registerConvertor(PlayerInfo.class, x -> x.getPlayerNames().get(0), this);
     }
 }

@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Getter
+@SuppressWarnings("all")
 public class VerifyInteractors extends SimpleInteractors<Plugin> {
     /** 当前正在等待新连接接入的用户 */
     protected volatile XiaomingUser strangeServerWaiter = null;
@@ -151,14 +152,13 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
             final long timeout = pluginConfiguration.getConnection().getVerifyTimeout();
             final String timeoutLength = TimeUtil.toTimeLength(timeout);
 
-            user.sendMessage("有新的服务器接入，这是你的服务器吗？\n" +
-                    "连接验证码：" + meetingContext.getVerifyCode() + "（你可以在服务器后台找到）。\n" +
-                    "在" + timeoutLength + "内回复「是」，小明将批准连接。" +
-                    "其他任何回答时小明将拒绝连接");
+            user.sendMessage("有陌生服务器接入。\n" +
+                    "如果是你的服务器，请在" + timeoutLength + "内告诉我服务器【后台】显示的连接验证码，\n" +
+                    "回复其他任何内容小明都将拒绝建立连接");
             try {
                 final Message message = user.nextMessageOrExit(timeout);
-                if (Objects.equals(message.serialize(), "是")) {
-                    user.sendMessage("给这个服务器起一个名字吧！");
+                if (Objects.equals(message.serialize(), verifyCode)) {
+                    user.sendMessage("告诉我这个服务器的名字吧！");
 
                     String name = null;
                     while (true) {
@@ -171,6 +171,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
                     }
 
                     final ServerInfo serverInfo = new ServerInfo();
+                    serverInfo.setRegisterTimeMillis(System.currentTimeMillis());
                     serverInfo.setName(name);
                     pluginConfiguration.getServers().put(name, serverInfo);
 
@@ -181,14 +182,20 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
 
                     meetingContext.accept(user.getCode(), serverInfo);
                     user.sendMessage("成功批准该服务器连接，并退出迎接新服务器的模式");
-                    strangeServerWaiter = null;
+                    pluginConfiguration.readyToSave();
+                } else {
+                    user.sendError("已拒绝该服务器连接");
+                    meetingContext.deny(user.getCode());
                 }
             } catch (InteractExitedException | InteractInterrtuptedException exception) {
                 user.sendError("操作被取消");
                 meetingContext.deny(xiaomingBot.getCode());
             } catch (InteractTimeoutException exception) {
-                user.sendError("你没有及时回复，小明已拒绝该服务器连接。");
+                user.sendError("你没有及时回复，小明已拒绝该服务器连接");
                 meetingContext.deny(xiaomingBot.getCode());
+            } finally {
+                strangeServerWaiter = null;
+                meetingContext = null;
             }
         });
 

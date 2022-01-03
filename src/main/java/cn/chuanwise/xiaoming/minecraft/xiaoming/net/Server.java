@@ -1,11 +1,16 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
-import cn.chuanwise.net.ProtocolException;
+import cn.chuanwise.api.Flushable;
+import cn.chuanwise.api.Logger;
+import cn.chuanwise.net.netty.*;
+import cn.chuanwise.net.netty.packet.JsonPacketCodeC;
 import cn.chuanwise.net.packet.*;
 import cn.chuanwise.toolkit.box.Box;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.ConditionUtil;
 import cn.chuanwise.util.ObjectUtil;
+import cn.chuanwise.util.StringUtil;
+import cn.chuanwise.util.ThrowableUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
 import cn.chuanwise.xiaoming.minecraft.util.PasswordHashUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
@@ -25,9 +30,12 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.Future;
 import lombok.Getter;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -40,15 +48,19 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 @Getter
-public class Server extends PluginObjectImpl<Plugin> {
+public class Server
+        extends PluginObjectImpl<Plugin>
+        implements Flushable {
     protected final ServerBootstrap serverBootstrap = new ServerBootstrap();
 
     protected NioEventLoopGroup executors;
 
     protected Channel channel;
     protected List<OnlineClient> onlineClients = new CopyOnWriteArrayList<>();
+    protected final ListenerHandler listenerHandler = new ListenerHandler();
 
     public List<OnlineClient> getOnlineClients() {
+        flush();
         return Collections.unmodifiableList(onlineClients);
     }
 
@@ -79,7 +91,15 @@ public class Server extends PluginObjectImpl<Plugin> {
                     ctx.channel().close();
                 } catch (ExecutionException e) {
                     final Throwable cause = e.getCause();
-                    plugin.getLogger().error("验证时出现异常", cause);
+                    if (cause instanceof InterruptedException) {
+                        plugin.getLogger().warn("等待验证被打断，强制断开客户端连接");
+                    } else if (cause instanceof ProtocolException) {
+                        plugin.getLogger().error("验证错误：" + cause.getMessage(), cause);
+                    } else if (cause instanceof TimeoutException) {
+                        plugin.getLogger().error("验证服务器身份超时", cause);
+                    } else {
+                        plugin.getLogger().error("验证时出现异常", cause);
+                    }
                     ctx.channel().close();
                 } catch (TimeoutException e) {
                     plugin.getLogger().error("验证超时");
@@ -99,7 +119,8 @@ public class Server extends PluginObjectImpl<Plugin> {
                     && Objects.equals(((RequestPacket<?, ?>) x).getPacketType(), XMMCProtocol.REQUEST_VERIFY), connection.getResponseTimeout());
             XMMCProtocol.checkProtocol(packet instanceof RequestPacket);
 
-            @SuppressWarnings("unchecked") final RequestPacket<VerifyRequest, VerifyResponse> verifyRequestPacket = (RequestPacket<VerifyRequest, VerifyResponse>) packet;
+            @SuppressWarnings("unchecked")
+            final RequestPacket<VerifyRequest, VerifyResponse> verifyRequestPacket = (RequestPacket<VerifyRequest, VerifyResponse>) packet;
 
             final VerifyRequest verifyRequest = verifyRequestPacket.getData();
             final String passwordHash = verifyRequest.getPasswordHash();
@@ -115,12 +136,28 @@ public class Server extends PluginObjectImpl<Plugin> {
 
             // 验证成功
             if (Objects.nonNull(serverInfo)) {
-                accepted = true;
-                final VerifyResponse.Accepted verifyResponse = new VerifyResponse.Accepted(serverInfo.getName());
-                ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
-                onlineClients.add(new OnlineClient(Server.this, ctx.channel(), serverInfo));
+                // 检查是否重复接入
+                OnlineClient onlineClient = null;
+                for (OnlineClient client : getOnlineClients()) {
+                    if (Objects.equals(serverInfo.getName(), client.getServerInfo().getName())) {
+                        onlineClient = client;
+                        break;
+                    }
+                }
 
-                plugin.getLogger().info("服务器 " + serverInfo.getName() + " 连接到小明");
+                if (Objects.nonNull(onlineClient)) {
+                    final VerifyResponse.Conflict verifyResponse = new VerifyResponse.Conflict();
+                    ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
+
+                    plugin.getLogger().info("有服务器尝试使用 " + serverInfo.getName() + " 的身份连接到小明，但该服务器已经在线了");
+                } else {
+                    accepted = true;
+                    final VerifyResponse.Accepted verifyResponse = new VerifyResponse.Accepted(serverInfo.getName());
+                    ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
+                    onlineClients.add(new OnlineClient(Server.this, ctx.channel(), serverInfo));
+
+                    plugin.getLogger().info("服务器「" + serverInfo.getName() + "」连接到小明");
+                }
                 return;
             }
 
@@ -139,7 +176,7 @@ public class Server extends PluginObjectImpl<Plugin> {
 
             // 如果此时正在忙碌
             // 回复忙碌消息
-            if (optionalMeetingContext.isEmpty()) {
+            if (!optionalMeetingContext.isPresent()) {
                 plugin.getLogger().info("新服务器连接到小明，但迎新 QQ 忙碌，故拒绝了连接");
                 ctx.writeAndFlush(new ResponsePacket<>(new VerifyResponse.Confirm.Busy(), 0, 0));
                 return;
@@ -191,7 +228,7 @@ public class Server extends PluginObjectImpl<Plugin> {
             msgBox.set(packet);
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("all")
         public Packet nextPacket(Predicate<Packet> assertion, long timeout) throws InterruptedException, TimeoutException, ProtocolException {
             final Container<Packet> nextValue = msgBox.nextValue(timeout);
             if (nextValue.isEmpty()) {
@@ -200,17 +237,17 @@ public class Server extends PluginObjectImpl<Plugin> {
             final Packet packet = nextValue.get();
 
             if (!assertion.test(packet)) {
-                throw new ProtocolException();
+                XMMCProtocol.checkProtocol(false);
             }
 
             return packet;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("all")
         public <T> T nextResponse(ResponsiblePacketType<T> packetType, long timeout) throws InterruptedException, TimeoutException {
             final Packet packet = msgBox.nextValue(timeout).orElseThrow(TimeoutException::new);
             if (!(packet instanceof ResponsePacket)) {
-                throw new ProtocolException();
+                XMMCProtocol.checkProtocol(false);
             }
 
             return ((ResponsePacket<T>) packet).getData();
@@ -220,12 +257,22 @@ public class Server extends PluginObjectImpl<Plugin> {
     public Server(Plugin plugin) {
         setPlugin(plugin);
 
+        // 当 handler remove，删除 online client
+        listenerHandler.getRemoveListeners().add(HandlerListener.repetitive(context -> {
+            final Channel channel = context.channel();
+            onlineClients.removeIf(x -> x.getChannel() == channel);
+        }));
+
         serverBootstrap.channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_REUSEADDR, true)
-                .childHandler(new ChannelInitializer<>() {
+                .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel channel) throws Exception {
                         final ChannelPipeline pipeline = channel.pipeline();
+
+                        final Logger logger = plugin.getLog();
+                        final PluginConfiguration.Connection connection = plugin.getPluginConfiguration().getConnection();
+                        pipeline.addLast(new IdleStateHandler(connection.getIdleTimeout(), 0, 0, TimeUnit.MILLISECONDS));
 
                         pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
                         pipeline.addLast(new LengthFieldPrepender(4));
@@ -234,24 +281,12 @@ public class Server extends PluginObjectImpl<Plugin> {
                         pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
 
                         pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.getInstance()));
+                        pipeline.addLast(new DebugDuplexHandler("packet", logger));
+                        pipeline.addLast(listenerHandler);
+
                         pipeline.addLast(new VerifyHandler());
                     }
-
-                    @Override
-                    public void channelInactive(ChannelHandlerContext context) throws Exception {
-                        onlineClients.removeIf(x -> x.getChannel() == context.channel());
-                    }
                 });
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (Objects.isNull(executors)) {
-                return;
-            }
-
-            if (!executors.isTerminated()) {
-                executors.shutdownGracefully();
-            }
-        }));
     }
 
     public void setupConfiguration() {
@@ -261,6 +296,15 @@ public class Server extends PluginObjectImpl<Plugin> {
         if (Objects.isNull(executors)) {
             executors = new NioEventLoopGroup(connection.getThreadCount());
             serverBootstrap.group(executors);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (Objects.isNull(executors)) {
+                    return;
+                }
+
+                if (!executors.isTerminated()) {
+                    executors.shutdownGracefully();
+                }
+            }));
         }
 
         serverBootstrap.localAddress(connection.getPort());
@@ -298,5 +342,10 @@ public class Server extends PluginObjectImpl<Plugin> {
         final ChannelFuture closeFuture = channel.close();
 
         return Optional.of(closeFuture);
+    }
+
+    @Override
+    public void flush() {
+        onlineClients.removeIf(x -> !x.isConnected());
     }
 }

@@ -1,10 +1,11 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
 import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
-import org.junit.Test;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -19,6 +20,6 @@ public class ClientTest {
 
     @Test
     void testConnect() throws ExecutionException, InterruptedException {
-        client.connect().orElseThrow().get();
+        client.connect().orElseThrow(NoSuchElementException::new).get();
     }
 }

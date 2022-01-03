@@ -1,28 +1,38 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope;
 
 import cn.chuanwise.util.CollectionUtil;
+import cn.chuanwise.util.StringUtil;
+import cn.chuanwise.xiaoming.contact.contact.GroupContact;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Data
-public class GroupScope extends Scope {
-    Set<Long> groupCodes = new HashSet<>();
+@NoArgsConstructor
+@AllArgsConstructor
+public class GroupScope extends QQScope {
+    String groupTag;
 
     @Override
-    public void sendMessage(Plugin plugin, List<String> messages) {
-        groupCodes.forEach(x -> messages.forEach(y -> plugin.getXiaomingBot().getContactManager().sendGroupMessage(x, y)));
+    public void sendMessage(List<String> messages) {
+        Plugin.getInstance()
+                .getXiaomingBot()
+                .getGroupInformationManager()
+                .searchGroupsByTag(groupTag)
+                .forEach(x -> {
+            x.getContact().ifPresent(y -> messages.forEach(y::sendMessage));
+        });
     }
 
     @Override
-    public String getDescription(Plugin plugin) {
-        if (groupCodes.isEmpty()) {
+    public String getDescription() {
+        if (StringUtil.isEmpty(groupTag)) {
             return "无任何群聊";
         } else {
-            return "群聊" + CollectionUtil.toString(groupCodes, plugin.getXiaomingBot().getGroupInformationManager()::getAliasAndCode);
+            return "带有标签 #" + groupTag + " 的群聊";
         }
     }
 }

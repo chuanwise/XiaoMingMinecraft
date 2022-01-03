@@ -2,23 +2,23 @@ configuration:
   contextPrefix: .
   format:
     debug:
-      prefix: §8[§1小明§8] §9
+      prefix: '§8[§1小明§8] §9'
       suffix: ''
     error:
-      prefix: §8[§4小明§8] §c
+      prefix: '§8[§4小明§8] §c'
       suffix: ''
     info:
-      prefix: §8[§3小明§8] §b
+      prefix: '§8[§3小明§8] §b'
       suffix: ''
     success:
-      prefix: §8[§2小明§8] §a
+      prefix: '§8[§2小明§8] §a'
       suffix: ''
     warn:
-      prefix: §8[§6小明§8] §e
+      prefix: '§8[§6小明§8] §e'
       suffix: ''
   maxVariableCount: 10
   noSuchContext: '[context %s : [0, %d)]'
-  noSuchNode: 缺少语言节点 %s
+  noSuchNode: '{%s}'
 messages:
   net:
     connect:
@@ -26,17 +26,20 @@ messages:
       failed: '未成功连接到小明'
       multi: '已经连接到小明了，无需再次连接'
     verify:
-      accepted: '成功连接到小明。当前服务器名为 {.0}'
+      accepted: '通过身份验证，当前服务器名为「{.0}」'
       denied: '未成功通过验证，请先私聊小明「迎接新服务器」后使用 /xm connect 再次尝试'
+      conflict: '未成功通过验证，因为相同身份的小明已经在线了。这可能是你原封不动地复制了服务器的身份信息，或有人冒充本服务器连接了你的小明'
       confirm:
-        message: '成功连接到小明，但这是初次连接，请在 {.0} 内和小明确认服务器身份。本服的验证码是：{.1}'
+        message: '这是初次连接，请在 {.0} 内将本服务器验证码【{.1}】发送给小明'
         accepted: '成功向小明确认了本服务器的身份：{.0}'
         denied: '对方小明拒绝了本服务器的连接'
         busy: '小明正在迎接新的服务器，稍后再连接吧'
       timeout: '你没有及时确认服务器特征信息，验证失败'
       error:
-        exception: '验证服务器身份时出现异常。请将下列信息反馈给插件作者\n{.0}'
-        protocol: '协议错误，当前通讯协议版本：{.0}'
+        exception: '验证服务器身份时出现异常。请将下列信息反馈给插件作者
+
+                {.0}'
+        protocol: '协议错误，当前通讯协议版本「{.0}」'
         timeout: '验证服务器身份超时'
         cancelled: '操作被取消'
         algorithm: '本平台上缺少加密所需的 PBKDF2 算法，无法构造连接请求'
@@ -53,10 +56,52 @@ messages:
       succeed: '成功断开连接'
       failed: '未成功断开连接'
       multi: '尚未连接到小明，无需断连'
+    state:
+      disconnected: '服务器尚未连接到小明，请稍后再试'
+      timeout: '请求超时'
+      interrupted: '请求被打断，请在 QQ 上确认操作是否成功'
+      exception:
+        io: '网络异常'
+        connect: '连接失败'
+        unknown: '连接出现未知异常'
+        timeout: '请求超时'
+    heartbeat: '已发送心跳包'
+  playerInfo:
+    bind:
+      wait: '请在注意 QQ 消息，该请求将在 {.0} 内取消'
+      interrupted: '等待确认绑定结果的过程被打断，绑定失败'
+      accepted: '绑定成功'
+      timeout: '你没有及时在 QQ 上确认绑定，绑定失败'
+      denied: '对方拒绝了你的绑定请求'
+      failed: '未找到这名 QQ 用户，绑定失败'
+      repeat: '你已经绑定到这个 QQ 上了'
+      other: '你已经绑定到其他 QQ 上了。若需要解绑，请输入 /xm unbind'
+      operator: '只有真正的玩家才可以绑定 QQ'
+    unbind:
+      succeed: '成功解绑'
+      failed: '未成功解绑，你并没有绑定在任何 QQ 上'
+      operator: '只有真正的玩家才可以解绑 QQ'
+  ask:
+    accepted: '已批准请求'
+    denied: '已拒绝请求'
+    ignored: '已忽略请求'
+    free: '没有待处理的请求'
   debug:
     enabled: '已启动调试模式'
     disabled: '已关闭调试模式'
   language:
     updated: '语言文件已更新'
+    loaded: '已载入语言文件'
+    default: '已保存默认语言文件'
   saved: '文件已保存'
-  reloaded: '已重载全部数据'
+  reload:
+    succeed: '成功重载全部数据'
+    failed: '未重载全部数据，详情如下：
+    
+    {.0}'
+  configuration:
+    host:
+      configured: '小明主机已被设置为 {.0}'
+    port:
+      configured: '小明端口已被设置为 {.0}'
+      failed: '端口值「{.0}」错误，应该是数字'

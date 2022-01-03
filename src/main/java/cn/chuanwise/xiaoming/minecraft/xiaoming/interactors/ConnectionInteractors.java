@@ -8,6 +8,10 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
+import io.netty.channel.ChannelFuture;
+
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @SuppressWarnings("all")
 public class ConnectionInteractors extends SimpleInteractors<Plugin> {
@@ -17,15 +21,15 @@ public class ConnectionInteractors extends SimpleInteractors<Plugin> {
         final Server server = plugin.getServer();
         final PluginConfiguration.Connection connection = plugin.getPluginConfiguration().getConnection();
         if (server.isBound()) {
-            user.sendError("服务器已经启动了！");
+            user.sendError("服务器已经启动了");
             return;
         }
 
-        server.bind().orElseThrow().addListener(x -> {
+        server.bind().orElseThrow(NoSuchElementException::new).addListener(x -> {
             if (x.isSuccess()) {
-                user.sendMessage("服务器成功在端口 " + connection.getPort() + " 上启动");
+                user.sendMessage("成功在端口 " + connection.getPort() + " 上启动服务器");
             } else {
-                user.sendError("服务器启动失败");
+                user.sendError("未成功启动服务器");
             }
         });
     }
@@ -35,15 +39,35 @@ public class ConnectionInteractors extends SimpleInteractors<Plugin> {
     void disableServer(XiaomingUser user) {
         final Server server = plugin.getServer();
         if (!server.isBound()) {
-            user.sendError("服务器并未启动！");
+            user.sendError("服务器并未启动");
             return;
         }
 
-        server.unbind().orElseThrow().addListener(x -> {
+        server.unbind().orElseThrow(NoSuchElementException::new).addListener(x -> {
             if (x.isSuccess()) {
-                user.sendMessage("服务器成功关闭");
+                user.sendMessage("成功关闭服务器");
             } else {
-                user.sendError("服务器关闭失败");
+                user.sendError("未成功关闭服务器");
+            }
+        });
+    }
+
+    @Filter(Words.REENABLE + Words.SERVER)
+    @Required("xmmc.admin.server.reenable")
+    void reenableServer(XiaomingUser user) throws InterruptedException {
+        final Server server = plugin.getServer();
+        final Optional<ChannelFuture> optionalUnbindFuture = server.unbind();
+        if (optionalUnbindFuture.isPresent()) {
+            optionalUnbindFuture.get().sync();
+        }
+
+        final int port = plugin.getPluginConfiguration().getConnection().getPort();
+
+        server.bind().orElseThrow(NoSuchElementException::new).addListener(x -> {
+            if (x.isSuccess()) {
+                user.sendMessage("成功在端口 " + port + " 上启动服务器");
+            } else {
+                user.sendError("未成功重启服务器");
             }
         });
     }

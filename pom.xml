@@ -6,11 +6,11 @@
 
     <groupId>cn.chuanwise</groupId>
     <artifactId>XiaoMingMinecraft</artifactId>
-    <version>4.0-exp</version>
+    <version>4.3.2-SNAPSHORT</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
     <repositories>
@@ -25,40 +25,42 @@
         <dependency>
             <groupId>cn.chuanwise</groupId>
             <artifactId>NetLib</artifactId>
-            <version>1.0</version>
+            <version>1.1-SNAPSHORT</version>
         </dependency>
 
         <dependency>
             <groupId>cn.chuanwise</groupId>
             <artifactId>McLibCore</artifactId>
-            <version>1.0</version>
+            <version>1.1-SNAPSHORT</version>
         </dependency>
 
         <dependency>
             <groupId>cn.chuanwise</groupId>
             <artifactId>CommandLib</artifactId>
-            <version>1.0</version>
+            <version>1.1-SNAPSHORT</version>
         </dependency>
 
         <!-- net lib -->
         <dependency>
             <groupId>cn.chuanwise</groupId>
             <artifactId>WiseToolkitNetty</artifactId>
-            <version>3.1-exp</version>
-        </dependency>
-
-        <dependency>
-            <groupId>cn.chuanwise</groupId>
-            <artifactId>NetLib</artifactId>
-            <version>1.0</version>
+            <version>3.3-SNAPSHORT</version>
         </dependency>
 
         <!-- bukkit api-->
+<!--        <dependency>-->
+<!--            <groupId>org.bukkit</groupId>-->
+<!--            <artifactId>bukkit</artifactId>-->
+<!--            <version>1.12-R0.1-SNAPSHOT</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.12-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
+            <version>1.7.10-R0.1-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/bukkit-1.7.10-R0.1-20140817.175650-8.jar</systemPath>
         </dependency>
 
         <!-- bukkit related api: bstats -->
@@ -90,13 +92,14 @@
             <groupId>org.bstats</groupId>
             <artifactId>bstats-bungeecord</artifactId>
             <version>2.2.1</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- xiao ming core -->
         <dependency>
             <groupId>cn.chuanwise</groupId>
             <artifactId>xiaoming-core</artifactId>
-            <version>4.2-rel</version>
+            <version>4.3.4</version>
             <scope>provided</scope>
         </dependency>
 
