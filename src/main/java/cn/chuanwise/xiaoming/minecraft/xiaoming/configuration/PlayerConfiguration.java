@@ -16,6 +16,7 @@ public class PlayerConfiguration extends SimplePreservable<Plugin> {
     long boundTimeout = TimeUnit.MINUTES.toMillis(1);
 
     Set<PlayerInfo> players = new HashSet<>();
+    boolean allowBind = true;
 
     public Optional<PlayerInfo> getPlayerInfo(long accountCode) {
         return CollectionUtil.findFirst(players, x -> x.hasAccountCode(accountCode)).toOptional();
@@ -26,12 +27,14 @@ public class PlayerConfiguration extends SimplePreservable<Plugin> {
         return CollectionUtil.findFirst(players, x -> x.hasPlayerName(playerName)).toOptional();
     }
 
+    // TODO: 2022/1/4 配置绑定失败消息
     public enum BindReceipt {
         SUCCEED,
         REPEAT,
         OTHER,
+        DENIED,
     }
-    public BindReceipt bind(long accountCode, String playerName) {
+    public BindReceipt forceBind(long accountCode, String playerName) {
         final Optional<PlayerInfo> optionalSameCodePlayerInfo = getPlayerInfo(accountCode);
         if (optionalSameCodePlayerInfo.isPresent()) {
             final PlayerInfo playerInfo = optionalSameCodePlayerInfo.get();;
@@ -95,5 +98,12 @@ public class PlayerConfiguration extends SimplePreservable<Plugin> {
         } else {
             return false;
         }
+    }
+
+    public BindReceipt bind(long accountCode, String playerName) {
+        if (!allowBind) {
+            return BindReceipt.DENIED;
+        }
+        return forceBind(accountCode, playerName);
     }
 }

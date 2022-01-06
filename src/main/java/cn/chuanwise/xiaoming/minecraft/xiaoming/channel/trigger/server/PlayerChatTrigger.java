@@ -6,13 +6,14 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.MessageFilter;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.MessageFilterReceipt;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.MessageFilterTrigger;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerChatEvent;
 import lombok.Data;
 
 import java.util.Map;
 
 @Data
 public class PlayerChatTrigger
-        extends PlayerTrigger<PlayerChatInform>
+        extends PlayerTrigger<PlayerChatEvent>
         implements MessageFilterTrigger {
     MessageFilter messageFilter = new MessageFilter.All();
 
@@ -22,7 +23,7 @@ public class PlayerChatTrigger
     }
 
     @Override
-    protected TriggerHandleReceipt handle1(PlayerChatInform inform) {
+    protected TriggerHandleReceipt handle1(PlayerChatEvent inform) {
         final String message = inform.getMessage();
         final MessageFilterReceipt filterReceipt = messageFilter.filter(message);
 

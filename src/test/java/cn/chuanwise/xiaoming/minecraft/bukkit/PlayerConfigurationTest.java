@@ -17,14 +17,14 @@ public class PlayerConfigurationTest {
 
     @Test
     void testBind() {
-        Assertions.assertEquals(PlayerConfiguration.BindReceipt.SUCCEED, playerConfiguration.bind(123, "123"));
-        Assertions.assertEquals(PlayerConfiguration.BindReceipt.REPEAT, playerConfiguration.bind(123, "123"));
-        Assertions.assertEquals(PlayerConfiguration.BindReceipt.OTHER, playerConfiguration.bind(456, "123"));
+        Assertions.assertEquals(PlayerConfiguration.BindReceipt.SUCCEED, playerConfiguration.forceBind(123, "123"));
+        Assertions.assertEquals(PlayerConfiguration.BindReceipt.REPEAT, playerConfiguration.forceBind(123, "123"));
+        Assertions.assertEquals(PlayerConfiguration.BindReceipt.OTHER, playerConfiguration.forceBind(456, "123"));
     }
 
     @Test
     void testUnbind() {
-        playerConfiguration.bind(123, "123");
+        playerConfiguration.forceBind(123, "123");
         Assertions.assertTrue(playerConfiguration.unbind(123, "123"));
         Assertions.assertFalse(playerConfiguration.unbind(123, "123"));
     }

@@ -14,11 +14,13 @@ public class Words extends CommandWords {
             DEATH = "(死亡|死|death)",
             JOIN = "(上线|join)",
             QUIT = "(下线|quit)",
-            CHANGE_WORLD = "(穿越|穿越世界|changeworld)",
+            CHANGE_WORLD = "(切换|切换世界|switchworld|changeworld)",
             CHAT = "(聊天|chat)",
 
             MEMBER = "(群员|member)",
             MUTE = "(禁言|mute)",
+            XIAOMING = "(小明|xiaoming|xm)",
+            MINECRAFT = "(mc)",
 
             TAIL = "(小尾巴)";
 }

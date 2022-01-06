@@ -75,7 +75,7 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
     void forceBind(XiaomingUser user, @FilterParameter("玩家名") String playerName) {
         final PlayerConfiguration playerConfiguration = plugin.getPlayerConfiguration();
 
-        switch (playerConfiguration.bind(user.getCode(), playerName)) {
+        switch (playerConfiguration.forceBind(user.getCode(), playerName)) {
             case SUCCEED:
                 user.sendMessage("成功绑定玩家名「" + playerName + "」");
                 playerConfiguration.readyToSave();
@@ -133,7 +133,7 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
         final AskResponse response = onlineClient.getServerClient().ask(playerName, user.getAliasAndCode() + "是你的 QQ 账号吗？这个账号申请将你绑定到他的 QQ 上", playerConfiguration.getBoundTimeout());
         switch (response) {
             case ACCEPTED:
-                switch (playerConfiguration.bind(user.getCode(), playerName)) {
+                switch (playerConfiguration.forceBind(user.getCode(), playerName)) {
                     case REPEAT:
                         user.sendMessage("你已经绑定了玩家「" + playerName + "」");
                         break;

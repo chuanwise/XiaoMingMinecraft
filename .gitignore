@@ -114,3 +114,5 @@ fabric.properties
 fast-do-all.bat
 fast-do-bukkit.bat
 fast-do-xiaoming.bat
+
+!lib\*

@@ -11,9 +11,10 @@ import cn.chuanwise.net.packet.RequestPacketType;
 /** XMMC 通讯协议 */
 public class XMMCProtocol extends Protocol {
     /** 通讯协议版本 */
-    public static final String VERSION = "1.0-exp";
+    public static final String VERSION = "1.1-SNAPSHORT";
 
     public static final RequestPacketType<Long, Long> REQUEST_CONFIRM_ACTIVE = new RequestPacketType<>(Long.class, Long.class);
+    public static final InformPacketType<PacketInform> INFORM_PACKET = new InformPacketType<>(PacketInform.class);
 
     /**
      * 如果回应 {@link VerifyResponse.Confirm}，则需要用户在 qq 上确认特征信息。
@@ -33,6 +34,9 @@ public class XMMCProtocol extends Protocol {
     public static final RequestPacketType<PlayerBindRequest, PlayerBindResponse> REQUEST_PLAYER_BIND = new RequestPacketType<>(PlayerBindRequest.class, PlayerBindResponse.class);
     public static final RequestPacketType<String, Boolean> REQUEST_PLAYER_UNBIND = new RequestPacketType<>(String.class, Boolean.class);
     public static final InformPacketType<PlayerBindResultInform> INFORM_PLAYER_BIND_RESULT = new InformPacketType<>(PlayerBindResultInform.class);
+
+    /** 申请执行指令 */
+    public static final RequestPacketType<CommandRequest, CommandRequestResponse> REQUEST_COMMAND_REQUEST = new RequestPacketType<>(CommandRequest.class, CommandRequestResponse.class);
 
     public static void checkProtocol(boolean legal, String message) {
         if (legal) {

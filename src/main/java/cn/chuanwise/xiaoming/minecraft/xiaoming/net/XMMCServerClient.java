@@ -11,6 +11,10 @@ import cn.chuanwise.xiaoming.minecraft.protocol.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerInfo;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerChatEvent;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerJoinEvent;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerKickEvent;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerQuitEvent;
 import cn.chuanwise.xiaoming.object.PluginObjectImpl;
 import lombok.Data;
 
@@ -45,12 +49,26 @@ public class XMMCServerClient extends PluginObjectImpl<Plugin> {
     private void setupTriggerForwarders() {
         final Server server = plugin.getServer();
 
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_CHANGE_WORLD, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_CHAT, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_JOIN, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_QUIT, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_DEATH, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_KICK, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
+        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_CHANGE_WORLD_EVENT, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
+        packetHandler.setOnRequest(NetLibProtocol.REQUEST_PLAYER_CHAT_EVENT, x -> {
+            final PlayerChatEvent event = new PlayerChatEvent(x, onlineClient);
+            xiaomingBot.getEventManager().callEvent(event);
+            return event.isCancelled();
+        });
+        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_JOIN_EVENT, x -> {
+            final PlayerJoinEvent event = new PlayerJoinEvent(x, onlineClient);
+            xiaomingBot.getEventManager().callEvent(event);
+        });
+        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_QUIT_EVENT, x -> {
+            final PlayerQuitEvent event = new PlayerQuitEvent(x, onlineClient);
+            xiaomingBot.getEventManager().callEvent(event);
+        });
+        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_DEATH_EVENT, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
+        packetHandler.setOnRequest(NetLibProtocol.REQUEST_PLAYER_KICK_EVENT, x -> {
+            final PlayerKickEvent event = new PlayerKickEvent(x, onlineClient);
+            xiaomingBot.getEventManager().callEvent(event);
+            return event.isCancelled();
+        });
     }
 
     private void setupPlayerInfoListeners() {
@@ -122,7 +140,7 @@ public class XMMCServerClient extends PluginObjectImpl<Plugin> {
                     }
 
                     if (bound) {
-                        playerConfiguration.bind(accountCode, playerName);
+                        playerConfiguration.forceBind(accountCode, playerName);
                         playerConfiguration.readyToSave();
                         inform = PlayerBindResultInform.ACCEPTED;
                     } else {

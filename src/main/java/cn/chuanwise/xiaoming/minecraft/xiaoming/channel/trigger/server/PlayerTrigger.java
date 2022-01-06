@@ -1,6 +1,5 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server;
 
-import cn.chuanwise.mclib.net.protocol.PlayerInform;
 import cn.chuanwise.util.ConditionUtil;
 import cn.chuanwise.util.StringUtil;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
@@ -8,12 +7,13 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.AccountTagTrigge
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerInfo;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerEvent;
 import lombok.Data;
 
 import java.util.*;
 
 @Data
-public abstract class PlayerTrigger<T extends PlayerInform>
+public abstract class PlayerTrigger<T extends PlayerEvent>
         extends ServerTrigger<T>
         implements AccountTagTrigger {
     String accountTag;
@@ -60,6 +60,7 @@ public abstract class PlayerTrigger<T extends PlayerInform>
         environment.put("player", playerName);
         environment.put("sender", playerName);
         environment.put("serverTag", serverTag);
+
         playerConfiguration.getPlayerInfo(playerName)
                 .ifPresent(x -> {
                     environment.put("player", x);
@@ -88,8 +89,4 @@ public abstract class PlayerTrigger<T extends PlayerInform>
     }
 
     protected abstract String getDescription1();
-
-    protected Map<String, Object> buildEnvironment1(T t) {
-        return Collections.emptyMap();
-    }
 }

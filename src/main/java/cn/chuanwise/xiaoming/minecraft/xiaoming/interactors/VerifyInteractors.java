@@ -12,6 +12,8 @@ import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.StringGenerator;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
 import lombok.Getter;
@@ -87,7 +89,13 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.MEET + Words.NEW + Words.SERVER)
     @Filter(Words.ALLOW + Words.NEW + Words.SERVER)
     @Required("xmmc.admin.meeting.enable")
-    void waiting(XiaomingUser user) {
+    void meeting(XiaomingUser user) {
+        final Server server = plugin.getServer();
+        if (!server.isBound()) {
+            user.sendError("服务器还没有启动，请先使用「启动服务器」启动吧");
+            return;
+        }
+
         if (Objects.isNull(strangeServerWaiter)) {
             strangeServerWaiter = user;
             user.sendMessage("成功在当前会话下允许新服务器接入");
@@ -140,7 +148,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
         }
 
         final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
-        final PluginConfiguration.Generator.SingleGenerator verifyCodeGenerator = pluginConfiguration.getGenerator().getVerifyCode();
+        final StringGenerator verifyCodeGenerator = pluginConfiguration.getGenerator().getVerifyCode();
 
         final String verifyCode = StringUtil.randomString(verifyCodeGenerator.getCharacters(), verifyCodeGenerator.getLength());
         meetingContext = new MeetingContext(verifyCode);
@@ -176,7 +184,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
                     pluginConfiguration.getServers().put(name, serverInfo);
 
                     // 生成随机密码
-                    final PluginConfiguration.Generator.SingleGenerator passwordGenerator = pluginConfiguration.getGenerator().getPassword();
+                    final StringGenerator passwordGenerator = pluginConfiguration.getGenerator().getPassword();
                     final String password = StringUtil.randomString(passwordGenerator.getCharacters(), passwordGenerator.getLength());
                     serverInfo.setPassword(password);
 

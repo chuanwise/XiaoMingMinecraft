@@ -167,6 +167,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
     @Required("xmmc.admin.channel.look")
     void channelInfo(XiaomingUser user, @FilterParameter("频道") Channel channel) {
         user.sendMessage("「频道信息」\n" +
+                "状态：" + (channel.isEnabled() ? "已启动" : "已关闭") + "\n" +
                 "频道名：" + channel.getName() + "\n" +
                 "范围：" + Optional.ofNullable(CollectionUtil.toIndexString(channel.getScopes(), Scope::getDescription))
                         .map(x -> "\n" + x)
@@ -175,6 +176,30 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
                         .map(x -> "\n" + x)
                         .orElse("（无）")
         );
+    }
+
+    @Filter(Words.ENABLE + Words.CHANNEL + " {频道}")
+    @Required("xmmc.admin.channel.enable")
+    void enableChannel(XiaomingUser user, @FilterParameter("频道") Channel channel) {
+        if (channel.isEnabled()) {
+            user.sendError("频道「" + channel.getName() + "」已经启动了");
+        } else {
+            channel.setEnabled(true);
+            plugin.getChannelConfiguration().readyToSave();
+            user.sendError("成功启动频道「" + channel.getName() + "」");
+        }
+    }
+
+    @Filter(Words.DISABLE + Words.CHANNEL + " {频道}")
+    @Required("xmmc.admin.channel.disable")
+    void disableChannel(XiaomingUser user, @FilterParameter("频道") Channel channel) {
+        if (channel.isEnabled()) {
+            channel.setEnabled(false);
+            plugin.getChannelConfiguration().readyToSave();
+            user.sendError("成功关闭频道「" + channel.getName() + "」");
+        } else {
+            user.sendError("频道「" + channel.getName() + "」尚未启动");
+        }
     }
 
     @Filter(Words.CHANNEL + Words.TRIGGER + " {频道}")
@@ -274,7 +299,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
         trigger.setAccountTag(user.nextMessageOrExit().serialize());
     }
 
-    void configTriggerAccountTag(XiaomingUser user, Channel channel, PlayerChatTrigger trigger) {
+    void configTriggerAccountTag(XiaomingUser user, Channel channel, PlayerTrigger<?> trigger) {
         user.sendMessage("服务器玩家需要绑定 QQ 才能激活该触发器吗？回复「是」，或其他任意内容");
         final String reply = user.nextMessageOrExit().serialize();
         if (Objects.equals(reply, "是")) {

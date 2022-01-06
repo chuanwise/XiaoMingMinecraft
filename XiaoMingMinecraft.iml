@@ -50,8 +50,8 @@
     <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.28" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.guava:guava:21.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.bstats:bstats-bungeecord:2.2.1" level="project" />
-    <orderEntry type="module" module-name="xiaoming-core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="xiaoming-api" scope="PROVIDED" />
+    <orderEntry type="module" module-name="XiaoMingCore" scope="PROVIDED" />
+    <orderEntry type="module" module-name="XiaoMingApi" scope="PROVIDED" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-api-jvm:2.9.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-reflect:1.5.30" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib:1.5.30" level="project" />

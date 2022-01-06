@@ -33,6 +33,10 @@ public class ChannelConfiguration extends SimplePreservable<Plugin> {
         final Set<ChannelHandlerReceipt> results = new HashSet<>();
         final Map<String, Channel> channels = channelConfiguration.getChannels();
         for (Channel channel : channels.values()) {
+            if (!channel.isEnabled()) {
+                continue;
+            }
+
             final Map<String, Object> environment = new HashMap<>();
             final List<String> messages = channel.getTriggers()
                     .values()

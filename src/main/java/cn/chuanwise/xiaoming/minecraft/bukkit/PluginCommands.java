@@ -217,4 +217,9 @@ public class PluginCommands extends BukkitPluginObject<Plugin> {
         configuration.save();
         communicator().info(sender, "configuration.port.configured", portString);
     }
+
+    @OnCommand(value = "request @command...", permission = "xmmc.user.request")
+    void requestExecute(CommandSender sender, @Parameter("command") String command) {
+
+    }
 }

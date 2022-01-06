@@ -25,6 +25,7 @@ import java.util.concurrent.TimeoutException;
 @SuppressWarnings("all")
 public class Plugin extends JavaPlugin {
     protected static final Plugin INSTANCE = new Plugin();
+
     public static Plugin getInstance() {
         return INSTANCE;
     }
@@ -33,7 +34,8 @@ public class Plugin extends JavaPlugin {
     protected PlayerConfiguration playerConfiguration;
     protected ChannelConfiguration channelConfiguration;
 
-    protected VerifyInteractors verifyInteractors;
+    protected VerifyInteractors verifyInteractors = new VerifyInteractors();
+    private final CommandRequestInteractors interactors = new CommandRequestInteractors();
 
     protected Server server;
     protected Logger log;
@@ -70,10 +72,8 @@ public class Plugin extends JavaPlugin {
                 getLogger().warn(message);
             }
         };
-        verifyInteractors = new VerifyInteractors();
 
         server = new Server(this);
-        final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
     }
 
     @Override
@@ -101,6 +101,7 @@ public class Plugin extends JavaPlugin {
         xiaomingBot.getInteractorManager().registerInteractors(new CommandInteractors(), this);
         xiaomingBot.getInteractorManager().registerInteractors(new AccountInteractors(), this);
         xiaomingBot.getInteractorManager().registerInteractors(new ConfigurationInteractors(), this);
+        xiaomingBot.getInteractorManager().registerInteractors(interactors, this);
         xiaomingBot.getInteractorManager().registerInteractors(verifyInteractors, this);
 
         xiaomingBot.getEventManager().registerListeners(new TriggerListeners(), this);

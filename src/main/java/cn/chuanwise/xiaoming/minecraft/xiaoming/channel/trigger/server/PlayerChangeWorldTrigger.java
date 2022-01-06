@@ -2,21 +2,25 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server;
 
 import cn.chuanwise.mclib.net.protocol.PlayerChangeWorldInform;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerChangeWorldEvent;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PlayerChangeWorldTrigger extends PlayerTrigger<PlayerChangeWorldInform> {
+public class PlayerChangeWorldTrigger extends PlayerTrigger<PlayerChangeWorldEvent> {
     @Override
     protected String getDescription1() {
         return "穿越世界触发器";
     }
 
     @Override
-    protected Map<String, Object> buildEnvironment1(PlayerChangeWorldInform inform) {
+    protected TriggerHandleReceipt handle1(PlayerChangeWorldEvent event) {
         final Map<String, Object> environment = new HashMap<>();
-        environment.put("from", inform.getFromWorldName());
-        environment.put("to", inform.getToWorldName());
-        return environment;
+
+        environment.put("fromWorld", event.getFromWorldName());
+        environment.put("toWorld", event.getToWorldName());
+
+        return new TriggerHandleReceipt.Handled(environment, messages);
     }
 }

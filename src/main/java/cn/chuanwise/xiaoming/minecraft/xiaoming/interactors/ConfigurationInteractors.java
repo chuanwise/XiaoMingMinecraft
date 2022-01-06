@@ -5,10 +5,14 @@ import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ChannelConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaomingUser;
+
+import java.io.IOException;
 
 @SuppressWarnings("all")
 public class ConfigurationInteractors extends SimpleInteractors<Plugin> {
@@ -42,5 +46,25 @@ public class ConfigurationInteractors extends SimpleInteractors<Plugin> {
         } else {
             user.sendMessage("成功关闭调试模式");
         }
+    }
+
+    @Filter(Words.RELOAD + Words.XIAOMING + Words.MINECRAFT)
+    @Required("xmmc.admin.reload")
+    void reload(XiaomingUser user) {
+        plugin.onLoad();
+        user.sendMessage("成功重新载入 XiaoMingMinecraft 插件数据");
+    }
+
+    @Filter(Words.SAVE + Words.CONFIGURE)
+    @Required("xmmc.admin.config.save")
+    void saveConfig(XiaomingUser user) throws IOException {
+        final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
+        final PlayerConfiguration playerConfiguration = plugin.getPlayerConfiguration();
+        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
+
+        channelConfiguration.save();
+        playerConfiguration.save();
+        pluginConfiguration.save();
+        user.sendMessage("成功保存 XiaoMingMinecraft 的所有配置文件");
     }
 }

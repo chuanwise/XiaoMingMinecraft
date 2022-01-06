@@ -6,7 +6,7 @@
 
     <groupId>cn.chuanwise</groupId>
     <artifactId>XiaoMingMinecraft</artifactId>
-    <version>4.3.2-SNAPSHORT</version>
+    <version>4.3.6-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -98,8 +98,8 @@
         <!-- xiao ming core -->
         <dependency>
             <groupId>cn.chuanwise</groupId>
-            <artifactId>xiaoming-core</artifactId>
-            <version>4.3.4</version>
+            <artifactId>XiaoMingCore</artifactId>
+            <version>4.3.5</version>
             <scope>provided</scope>
         </dependency>
 
