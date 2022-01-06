@@ -112,7 +112,7 @@ pause
 
 你可以将它修改为 `ANDROID_PAD`（安卓平板协议），如下图所示：
 
-![修改为安卓平板协议](http://gchat.qpic.cn/gchatpic_new/1525916855/0-0-DD87FDCB60914716CF35AB0A06CC00AE/0?term=2)
+![修改为安卓平板协议](http://gchat.qpic.cn/gchatpic_new/1525916855/0-0-57847D2BB748E3B760534BE9DA36FDA0/0?term=2)
 
 请务必注意，**不要删除**周围的英文半角双引号 `"`。
 
