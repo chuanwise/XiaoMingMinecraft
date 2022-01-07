@@ -31,6 +31,7 @@ public abstract class Trigger<T> {
 
     protected List<String> messages = new ArrayList<>();
 
+    @SuppressWarnings("all")
     public final TriggerHandleReceipt handle(Object object) {
         if (!handledClass.isInstance(object)) {
             return TriggerHandleReceipt.Unhandled.getInstance();

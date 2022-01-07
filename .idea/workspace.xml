@@ -4,9 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="完善连接和触发器">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="更新 README.md">
+      <change afterPath="$PROJECT_DIR$/images/任命成功时的输出.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/修改为安卓平板协议.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/启动成功时的输出.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/扫码验证.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/扫码验证地址中的verify.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/扫码验证地址中的verify改为qrcode.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/滑动验证码.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/滑块验证助手.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/images/默认的协议设置.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/Trigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/Trigger.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,13 +67,20 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/images" />
     <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.62413794" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\projects\program\java\Maven\Jdk8\XiaoMingMinecraft\images" />
+      <recent name="E:\projects\program\java\Maven\Jdk8\XiaoMingMinecraft" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="E:\projects\program\java\Maven\Jdk8\XiaoMingMinecraft\images" />
+    </key>
     <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
       <recent name="cn.chuanwise.xiaoming.minecraft.util" />
     </key>
@@ -112,7 +129,21 @@
       <option name="project" value="LOCAL" />
       <updated>1641204157379</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="完善触发器和 README.md">
+      <created>1641488604929</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1641488604929</updated>
+    </task>
+    <task id="LOCAL-00007" summary="更新 README.md">
+      <created>1641488790003</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1641488790003</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -132,6 +163,8 @@
     <MESSAGE value="完善连接模块" />
     <MESSAGE value="完善触发器" />
     <MESSAGE value="完善连接和触发器" />
-    <option name="LAST_COMMIT_MESSAGE" value="完善连接和触发器" />
+    <MESSAGE value="完善触发器和 README.md" />
+    <MESSAGE value="更新 README.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="更新 README.md" />
   </component>
 </project>
