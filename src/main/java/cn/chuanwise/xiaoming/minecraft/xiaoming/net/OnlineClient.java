@@ -2,17 +2,16 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
 import cn.chuanwise.api.Flushable;
 import cn.chuanwise.mclib.net.contact.NetLibRemoteContact;
-import cn.chuanwise.net.netty.BaseProtocol;
+import cn.chuanwise.net.netty.protocol.BaseProtocol;
 import cn.chuanwise.net.netty.packet.PacketHandler;
-import cn.chuanwise.net.packet.RequestPacket;
-import cn.chuanwise.net.packet.ResponsePacket;
 import cn.chuanwise.net.packet.SignPacket;
 import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.ConditionUtil;
+import cn.chuanwise.util.Preconditions;
 import cn.chuanwise.xiaoming.minecraft.protocol.SendWorldMessageRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.XMMCProtocol;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.ServerDisconnectedEvent;
 import cn.chuanwise.xiaoming.object.PluginObjectImpl;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -25,7 +24,7 @@ import java.util.Set;
 
 @Getter
 public class OnlineClient
-        extends PluginObjectImpl<Plugin>
+        extends PluginObjectImpl<XMMCXiaoMingPlugin>
         implements Flushable {
     protected final Channel channel;
 
@@ -90,10 +89,20 @@ public class OnlineClient
     }
     protected final ExceptionHandler exceptionHandler = new ExceptionHandler();
 
+    @ChannelHandler.Sharable
+    protected class DisconnectHandler extends ChannelInboundHandlerAdapter {
+        @Override
+        public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+            plugin.getXiaoMingBot().getEventManager().callEvent(new ServerDisconnectedEvent(OnlineClient.this));
+            super.handlerRemoved(ctx);
+        }
+    }
+    protected final DisconnectHandler disconnectHandler = new DisconnectHandler();
+
     public OnlineClient(Server server, Channel channel, ServerInfo serverInfo) {
-        ConditionUtil.notNull(server, "server");
-        ConditionUtil.notNull(serverInfo, "server info");
-        ConditionUtil.notNull(channel, "channel");
+        Preconditions.nonNull(server, "server");
+        Preconditions.nonNull(serverInfo, "server info");
+        Preconditions.nonNull(channel, "channel");
 
         this.server = server;
         this.serverInfo = serverInfo;
@@ -104,12 +113,13 @@ public class OnlineClient
         channel.pipeline().addLast(heartbeatHandler);
         channel.pipeline().addLast(packetHandler);
         channel.pipeline().addLast(exceptionHandler);
+        channel.pipeline().addLast(disconnectHandler);
 
         remoteContact = new NetLibRemoteContact(packetHandler);
         serverClient = new XMMCServerClient(this, packetHandler);
 
         serverInfo.setLastConnectTimeMillis(System.currentTimeMillis());
-        plugin.getPluginConfiguration().readyToSave();
+        plugin.getSessionConfiguration().readyToSave();
 
         packetHandler.setDefaultMessageListener(packet -> {
             plugin.getLog().debug("no type packet: " + packet);

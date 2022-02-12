@@ -1,38 +1,39 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
 import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.ConditionUtil;
-import cn.chuanwise.util.StringUtil;
+import cn.chuanwise.util.*;
+import cn.chuanwise.util.Collections;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.Channel;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.GroupScope;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.PrivateScope;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.Scope;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.ServerScope;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.WorkGroup;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.Executor;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.ServerTagExecutor;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.server.ServerBroadcastExecutor;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.server.ServerConsoleCommandExecutor;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.xiaoming.XiaoMingSendMessageExecutor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ChannelConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
-import cn.chuanwise.xiaoming.user.XiaomingUser;
-import cn.chuanwise.xiaoming.util.InteractorUtil;
-import cn.chuanwise.xiaoming.util.MiraiCodeUtil;
+import cn.chuanwise.xiaoming.user.XiaoMingUser;
+import cn.chuanwise.xiaoming.util.Interactors;
+import cn.chuanwise.xiaoming.util.MiraiCodes;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("all")
-public class ChannelInteractors extends SimpleInteractors<Plugin> {
+public class ChannelInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
     @Override
     public void onRegister() {
-        xiaomingBot.getInteractorManager().registerParameterParser(Channel.class, context -> {
-            final XiaomingUser user = context.getUser();
+        xiaoMingBot.getInteractorManager().registerParameterParser(Channel.class, context -> {
+            final XiaoMingUser user = context.getUser();
             final String inputValue = context.getInputValue();
 
             final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
@@ -46,27 +47,27 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
             }
         }, true, plugin);
 
-        xiaomingBot.getInteractorManager().registerParameterParser(Trigger.class, context -> {
-            final XiaomingUser user = context.getUser();
+        xiaoMingBot.getInteractorManager().registerParameterParser(WorkGroup.class, context -> {
+            final XiaoMingUser user = context.getUser();
             final String inputValue = context.getInputValue();
 
             final Object channelObject = context.getArgumentValues().get("频道");
-            ConditionUtil.checkState(channelObject instanceof Channel, "internal error");
+            Preconditions.state(channelObject instanceof Channel, "internal error");
             final Channel channel = (Channel) channelObject;
 
-            final Optional<Trigger<?>> optionalTrigger = channel.getTrigger(inputValue);
-            if (!optionalTrigger.isPresent()) {
-                user.sendError("频道「" + channel.getName() + "」下没有触发器「" + inputValue + "」");
+            final Optional<WorkGroup> optionalWorkGroup = channel.getWorkGroup(inputValue);
+            if (!optionalWorkGroup.isPresent()) {
+                user.sendError("频道「" + channel.getName() + "」内没有工作组「" + inputValue + "」");
                 return null;
             } else {
-                return (Container) Container.ofOptional(optionalTrigger);
+                return (Container) Container.ofOptional(optionalWorkGroup);
             }
         }, true, plugin);
     }
 
     @Filter(Words.CHANNEL)
     @Required("xmmc.admin.channel.list")
-    void channel(XiaomingUser user) {
+    void channel(XiaoMingUser user) {
         final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
         final Map<String, Channel> channels = channelConfiguration.getChannels();
 
@@ -80,7 +81,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.ADD + Words.CHANNEL + " {频道}")
     @Filter(Words.NEW + Words.CHANNEL + " {频道}")
     @Required("xmmc.admin.channel.add")
-    void addChannel(XiaomingUser user, @FilterParameter("频道") String name) {
+    void addChannel(XiaoMingUser user, @FilterParameter("频道") String name) {
         final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
         final Map<String, Channel> channels = channelConfiguration.getChannels();
 
@@ -94,12 +95,12 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
         channels.put(name, channel);
         channelConfiguration.readyToSave();
 
-        user.sendMessage("成功创建频道");
+        user.sendMessage("成功创建空频道「" + name + "」，你可以用「添加工作组 " + name + " [工作组名]」为频道部署工作组");
     }
 
     @Filter(Words.REMOVE + Words.CHANNEL + " {频道}")
     @Required("xmmc.admin.channel.remove")
-    void removeChannel(XiaomingUser user, @FilterParameter("频道") Channel channel) {
+    void removeChannel(XiaoMingUser user, @FilterParameter("频道") Channel channel) {
         final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
         channelConfiguration.getChannels().remove(channel.getName());
         channelConfiguration.readyToSave();
@@ -107,72 +108,13 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
         user.sendMessage("成功删除频道「" + channel.getName() + "」");
     }
 
-    void addChannelScope0(XiaomingUser user, Channel channel, Scope scope) {
-        final Set<Scope> scopes = channel.getScopes();
-        if (scopes.add(scope)) {
-            user.sendMessage("成功为频道「" + channel.getName() + "」增加了影响范围「" + scope.getDescription() + "」");
-            plugin.getChannelConfiguration().readyToSave();
-        } else {
-            user.sendMessage("频道「" + channel.getName() + "」已经包含该范围了");
-        }
-    }
-
-    @Filter(Words.ADD + Words.CHANNEL + Words.GROUP + Words.SCOPE + " {频道} {群标签}")
-    @Required("xmmc.admin.channel.scope.add")
-    void addChannelGroupScope(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("群标签") String groupTag) {
-        addChannelScope0(user, channel, new GroupScope(groupTag));
-    }
-
-    @Filter(Words.ADD + Words.CHANNEL + Words.PRIVATE + Words.SCOPE + " {频道} {用户标签}")
-    @Required("xmmc.admin.channel.scope.add")
-    void addChannelPrivateScope(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("用户标签") String groupTag) {
-        addChannelScope0(user, channel, new PrivateScope(groupTag));
-    }
-
-    @Filter(Words.ADD + Words.CHANNEL + Words.SERVER + Words.SCOPE + " {频道} {服务器标签}")
-    @Required("xmmc.admin.channel.scope.add")
-    void addChannelServerScope(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("服务器标签") String serverTag) {
-        addChannelScope0(user, channel, new ServerScope(serverTag));
-    }
-
-    void removeChannelScope0(XiaomingUser user, Channel channel, Scope scope) {
-        final Set<Scope> scopes = channel.getScopes();
-        if (scopes.remove(scope)) {
-            user.sendMessage("成功删除频道「" + channel.getName() + "」的影响范围「" + scope.getDescription() + "」");
-            plugin.getChannelConfiguration().readyToSave();
-        } else {
-            user.sendError("频道「" + channel.getName() + "」并没有包含范围「" + scope.getDescription() + "」");
-        }
-    }
-
-    @Filter(Words.REMOVE + Words.CHANNEL + Words.GROUP + Words.SCOPE + " {频道} {群标签}")
-    @Required("xmmc.admin.channel.scope.remove")
-    void removeChannelGroupScope(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("群标签") String groupTag) {
-        removeChannelScope0(user, channel, new GroupScope(groupTag));
-    }
-
-    @Filter(Words.REMOVE + Words.CHANNEL + Words.PRIVATE + Words.SCOPE + " {频道} {用户标签}")
-    @Required("xmmc.admin.channel.scope.remove")
-    void removeChannelPrivateScope(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("用户标签") String accountTag) {
-        removeChannelScope0(user, channel, new PrivateScope(accountTag));
-    }
-
-    @Filter(Words.REMOVE + Words.CHANNEL + Words.SERVER + Words.SCOPE + " {频道} {服务器标签}")
-    @Required("xmmc.admin.channel.scope.remove")
-    void removeChannelServerScope(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("服务器标签") String serverTag) {
-        removeChannelScope0(user, channel, new ServerScope(serverTag));
-    }
-
     @Filter(Words.CHANNEL + " {频道}")
     @Required("xmmc.admin.channel.look")
-    void channelInfo(XiaomingUser user, @FilterParameter("频道") Channel channel) {
+    void channelInfo(XiaoMingUser user, @FilterParameter("频道") Channel channel) {
         user.sendMessage("「频道信息」\n" +
-                "状态：" + (channel.isEnabled() ? "已启动" : "已关闭") + "\n" +
                 "频道名：" + channel.getName() + "\n" +
-                "范围：" + Optional.ofNullable(CollectionUtil.toIndexString(channel.getScopes(), Scope::getDescription))
-                        .map(x -> "\n" + x)
-                        .orElse("（无）") + "\n" +
-                "触发器：" + Optional.ofNullable(CollectionUtil.toIndexString(channel.getTriggers().keySet()))
+                "状态：" + (channel.isEnable() ? "已启动" : "已关闭") + "\n" +
+                "工作组：" + Optional.ofNullable(CollectionUtil.toIndexString(channel.getWorkGroups().keySet()))
                         .map(x -> "\n" + x)
                         .orElse("（无）")
         );
@@ -180,11 +122,11 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
 
     @Filter(Words.ENABLE + Words.CHANNEL + " {频道}")
     @Required("xmmc.admin.channel.enable")
-    void enableChannel(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        if (channel.isEnabled()) {
+    void enableChannel(XiaoMingUser user, @FilterParameter("频道") Channel channel) {
+        if (channel.isEnable()) {
             user.sendError("频道「" + channel.getName() + "」已经启动了");
         } else {
-            channel.setEnabled(true);
+            channel.setEnable(true);
             plugin.getChannelConfiguration().readyToSave();
             user.sendError("成功启动频道「" + channel.getName() + "」");
         }
@@ -192,9 +134,9 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
 
     @Filter(Words.DISABLE + Words.CHANNEL + " {频道}")
     @Required("xmmc.admin.channel.disable")
-    void disableChannel(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        if (channel.isEnabled()) {
-            channel.setEnabled(false);
+    void disableChannel(XiaoMingUser user, @FilterParameter("频道") Channel channel) {
+        if (channel.isEnable()) {
+            channel.setEnable(false);
             plugin.getChannelConfiguration().readyToSave();
             user.sendError("成功关闭频道「" + channel.getName() + "」");
         } else {
@@ -202,130 +144,196 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
         }
     }
 
-    @Filter(Words.CHANNEL + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.look")
-    void channelTriggerInfo(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final Map<String, Trigger<?>> triggers = channel.getTriggers();
-        if (triggers.isEmpty()) {
-            user.sendError("频道「" + channel.getName() + "」没有任何触发器");
-            return;
-        }
+    private final Map<Class<?>, Function<XiaoMingUser, Trigger<?>>> triggerConfigurers = new HashMap<>();
+    {
+        triggerConfigurers.put(PlayerChangeWorldTrigger.class, user -> {
+            final PlayerChangeWorldTrigger trigger = new PlayerChangeWorldTrigger();
+            configServerTriggerServerTag(user, trigger);
+            configServerTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
+        triggerConfigurers.put(PlayerChatTrigger.class, user -> {
+            final PlayerChatTrigger trigger = new PlayerChatTrigger();
+            configServerTriggerServerTag(user, trigger);
+            configTriggerMessageFilter(user, trigger);
+            configServerTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
+        triggerConfigurers.put(PlayerDeathTrigger.class, user -> {
+            final PlayerDeathTrigger trigger = new PlayerDeathTrigger();
+            configServerTriggerServerTag(user, trigger);
+            configServerTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
+        triggerConfigurers.put(PlayerJoinTrigger.class, user -> {
+            final PlayerJoinTrigger trigger = new PlayerJoinTrigger();
+            configServerTriggerServerTag(user, trigger);
+            configServerTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
+        triggerConfigurers.put(PlayerQuitTrigger.class, user -> {
+            final PlayerQuitTrigger trigger = new PlayerQuitTrigger();
+            configServerTriggerServerTag(user, trigger);
+            configServerTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
 
-        user.sendMessage("「频道触发器信息」\n" +
-                CollectionUtil.toIndexString(triggers.entrySet(), x -> x.getKey() + "：" + x.getValue().getDescription())
-        );
+        triggerConfigurers.put(GroupMessageTrigger.class, user -> {
+            final GroupMessageTrigger trigger = new GroupMessageTrigger();
+            configXiaoMingTriggerGroupTag(user, trigger);
+            configTriggerMessageFilter(user, trigger);
+            configXiaoMingTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
+        triggerConfigurers.put(PrivateMessageTrigger.class, user -> {
+            final PrivateMessageTrigger trigger = new PrivateMessageTrigger();
+            configTriggerMessageFilter(user, trigger);
+            configXiaoMingTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
+        triggerConfigurers.put(MemberMuteTrigger.class, user -> {
+            final MemberMuteTrigger trigger = new MemberMuteTrigger();
+            configXiaoMingTriggerMustBindCompletely(user, trigger);
+            return trigger;
+        });
     }
 
-    @Filter(Words.CHANNEL + Words.BROADCAST + " {频道} {r:消息}")
-    @Filter(Words.SEND + Words.CHANNEL + Words.MESSAGE + " {频道} {r:消息}")
-    @Required("xmmc.admin.channel.broadcast")
-    void channelBroadcast(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("消息") String message) {
-        final Set<Scope> scopes = channel.getScopes();
-        if (scopes.isEmpty()) {
-            user.sendMessage("该频道没有包含任何范围，消息不会被发送");
-        } else {
-            scopes.forEach(x -> x.sendMessage(Arrays.asList(message)));
-            user.sendMessage("成功将消息发送到" + scopes.size() + " 个范围");
-        }
-    }
-
-    void configTriggerNameThenAdd(XiaomingUser user, Channel channel, Trigger<?> trigger) {
-        user.sendMessage("为这个触发器起一个名字吧！");
-        while (true) {
-            final String name = user.nextMessageOrExit().serialize();
-            final Optional<Trigger<?>> optionalTrigger = channel.getTrigger(name);
-            if (optionalTrigger.isPresent()) {
-                user.sendError("已经存在同名触发器，换个名字再试一次吧");
-                continue;
-            }
-
-            trigger.setName(name);
-            channel.getTriggers().put(name, trigger);
-            break;
-        }
-
-        plugin.getChannelConfiguration().readyToSave();
-        user.sendMessage("成功为频道「" + channel.getName() + "」添加触发器「" + trigger.getDescription() + "」");
-    }
-
-    void configTriggerMessages(XiaomingUser user, Channel channel, Trigger<?> trigger) {
-        final ChannelConfiguration.DefaultValue defaultValue = plugin.getChannelConfiguration().getDefaultValue();
-        String defaultMessage = null;
-        if (trigger instanceof GroupMessageTrigger) {
-            defaultMessage = defaultValue.getGroupMessageTriggerMessage();
-        } else if (trigger instanceof PlayerChatTrigger) {
-            defaultMessage = defaultValue.getPlayerChatTriggerMessage();
-        }
-
-        // 没有默认值
-        if (StringUtil.isEmpty(defaultMessage)) {
-            user.sendMessage("触发器被激活时，将会产生哪些消息？逐条告诉小明吧，使用「结束」结束");
-
-            final List<String> message = new ArrayList<>();
-            final List<String> translatedMessage = InteractorUtil.fillStringCollection(user, message, "触发器消息")
-                    .stream()
-                    .map(MiraiCodeUtil::contentToString)
-                    .collect(Collectors.toList());
-
-            trigger.setMessages(translatedMessage);
-        } else {
-            user.sendMessage("触发器被激活时，将会产生哪些消息？\n" +
-                    "小明建议你将其设置为「" + defaultMessage + "」，接受建议请回复「接受」。\n" +
-                    "或者逐条告诉小明你希望触发器激活时产生的消息，使用「结束」结束");
-
-            final String firstMessage = user.nextMessageOrExit().serialize();
-            final List<String> messages = new ArrayList<>();
-            if (Objects.equals(firstMessage, "接受")) {
-                messages.add(defaultMessage);
-                trigger.setMessages(messages);
-            } else {
-                messages.add(firstMessage);
-                final List<String> translatedMessage = InteractorUtil.fillStringCollection(user, messages, "触发器消息")
-                        .stream()
-                        .map(MiraiCodeUtil::contentToString)
-                        .collect(Collectors.toList());
-                trigger.setMessages(translatedMessage);
-            }
-        }
-    }
-
-    void configTriggerGroupTag(XiaomingUser user, Channel channel, GroupMessageTrigger trigger) {
-        user.sendMessage("哪些群的消息能激活该触发器？告诉小明它们的标签吧");
-        trigger.setGroupTag(user.nextMessageOrExit().serialize());
-    }
-
-    void configTriggerAccountTag(XiaomingUser user, Channel channel, AccountTagTrigger trigger) {
-        user.sendMessage("哪些 QQ 用户能激活该触发器呢？告诉小明他们的标签吧");
-        trigger.setAccountTag(user.nextMessageOrExit().serialize());
-    }
-
-    void configTriggerAccountTag(XiaomingUser user, Channel channel, PlayerTrigger<?> trigger) {
-        user.sendMessage("服务器玩家需要绑定 QQ 才能激活该触发器吗？回复「是」，或其他任意内容");
+    void configXiaoMingTriggerGroupTag(XiaoMingUser user, GroupTagTrigger trigger) {
+        user.sendMessage("服务器玩家绑定的 QQ 至少要带有什么标签才能激活该触发器呢？回复「所有」或一个标签");
         final String reply = user.nextMessageOrExit().serialize();
-        if (Objects.equals(reply, "是")) {
-            user.sendMessage("这些绑定的 QQ 用户需要具备什么标签才能激活该触发器呢？");
-            trigger.setAccountTag(user.nextMessageOrExit().serialize());
+
+        final String groupTag;
+        if (Objects.equals(reply, "所有")) {
+            groupTag = null;
         } else {
-            trigger.setAccountTag(null);
+            groupTag = reply;
         }
+        trigger.setGroupTag(groupTag);
     }
 
-    void configTriggerServerTag(XiaomingUser user, Channel channel, ServerTagTrigger trigger) {
-        user.sendMessage("哪些服务器上的人能激活该触发器呢？告诉小明它们的标签吧");
-        trigger.setServerTag(user.nextMessageOrExit().serialize());
-    }
-
-    void configTriggerPermission(XiaomingUser user, Channel channel, QQTrigger<?> trigger) {
-        user.sendMessage("每个 QQ 需要具备权限才能触发吗？回复我「不需要」或权限节点。");
+    /** Account Tag */
+    void configServerTriggerAccountTag(XiaoMingUser user, AccountTagTrigger trigger) {
+        user.sendMessage("服务器玩家绑定的 QQ 至少要带有什么标签才能激活该触发器呢？回复「无」或一个标签");
         final String reply = user.nextMessageOrExit().serialize();
-        if (Objects.equals(reply, "不需要")) {
-            trigger.setPermission("");
+
+        final String accountTag;
+        if (Objects.equals(reply, "无")) {
+            accountTag = null;
         } else {
-            trigger.setPermission(reply);
+            accountTag = reply;
+        }
+        trigger.setAccountTag(accountTag);
+    }
+
+    void configXiaoMingTriggerAccountTag(XiaoMingUser user, AccountTagTrigger trigger) {
+        user.sendMessage("用户要带有什么标签才能激活该触发器？回复「无」或一个标签");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String accountTag;
+        if (Objects.equals(reply, "无")) {
+            accountTag = null;
+        } else {
+            accountTag = reply;
+        }
+        trigger.setAccountTag(accountTag);
+    }
+
+    /** Server Tag */
+    void configServerTriggerServerTag(XiaoMingUser user, ServerTrigger trigger) {
+        user.sendMessage("玩家要在带有什么标签的服务器上才能激活该触发器？回复「无」或一个标签");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String serverTag;
+        if (Objects.equals(reply, "无")) {
+            serverTag = null;
+        } else {
+            serverTag = reply;
+        }
+        trigger.setServerTag(serverTag);
+    }
+
+    /** Must Bind */
+    void configServerTriggerMustBind(XiaoMingUser user, BindableTrigger trigger) {
+        user.sendMessage("玩家必须绑定 QQ 才能激活该触发器吗？回复「是」或其他任意内容");
+        trigger.setMustBind(Objects.equals(user.nextMessageOrExit().serialize(), "是"));
+    }
+
+    void configXiaoMingTriggerMustBind(XiaoMingUser user, BindableTrigger trigger) {
+        user.sendMessage("必须绑定玩家名才能激活该触发器吗？回复「是」或其他任意内容");
+        trigger.setMustBind(Objects.equals(user.nextMessageOrExit().serialize(), "是"));
+    }
+
+    void configServerTriggerMustBindCompletely(XiaoMingUser user, BindableTrigger trigger) {
+        configServerTriggerMustBind(user, trigger);
+        if (trigger.isMustBind()) {
+            configServerTriggerAccountTag(user, trigger);
+            configServerTriggerXiaoMingPermission(user, trigger);
         }
     }
 
-    void configTriggerMessageFilter(XiaomingUser user, Channel channel, MessageFilterTrigger trigger) {
+    void configXiaoMingTriggerMustBindCompletely(XiaoMingUser user, BindableTrigger trigger) {
+        configXiaoMingTriggerMustBind(user, trigger);
+        if (trigger.isMustBind()) {
+            configXiaoMingTriggerPlayerPermission(user, trigger);
+        }
+    }
+
+    /** Xiao Ming Permission */
+    void configServerTriggerXiaoMingPermission(XiaoMingUser user, XiaoMingPermissionTrigger trigger) {
+        user.sendMessage("玩家绑定的 QQ 至少要具备什么权限才能激活该触发器？回复「无」或小明权限节点");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String permission;
+        if (Objects.equals(reply, "无")) {
+            permission = null;
+        } else {
+            permission = reply;
+        }
+        trigger.setXiaoMingPermission(permission);
+    }
+
+    void configXiaoMingTriggerXiaoMingPermission(XiaoMingUser user, XiaoMingPermissionTrigger trigger) {
+        user.sendMessage("至少要具备什么权限才能激活该触发器？回复「无」或小明权限节点");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String permission;
+        if (Objects.equals(reply, "无")) {
+            permission = null;
+        } else {
+            permission = reply;
+        }
+        trigger.setXiaoMingPermission(permission);
+    }
+
+    /** Player Permission */
+    void configServerTriggerPlayerPermission(XiaoMingUser user, PlayerPermissionTrigger trigger) {
+        user.sendMessage("玩家具备什么权限才能激活该触发器？回复「无」或 Minecraft 服务器权限节点");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String permission;
+        if (Objects.equals(reply, "无")) {
+            permission = null;
+        } else {
+            permission = reply;
+        }
+        trigger.setPlayerPermission(permission);
+    }
+
+    void configXiaoMingTriggerPlayerPermission(XiaoMingUser user, PlayerPermissionTrigger trigger) {
+        user.sendMessage("绑定的玩家名中，至少要有一个在线并具备什么权限才能激活该触发器？回复「无」或 Minecraft 服务器权限节点");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String permission;
+        if (Objects.equals(reply, "无")) {
+            permission = null;
+        } else {
+            permission = reply;
+        }
+        trigger.setPlayerPermission(permission);
+    }
+
+    /** Message Filter */
+    void configTriggerMessageFilter(XiaoMingUser user, MessageFilterTrigger trigger) {
         user.sendMessage("哪些消息能激活这个触发器呢？\n" +
                 "回复我下面的任何一条规则（如「包含」），其他任意内容将使小明允许所有消息触发。\n" +
                 "开头包含、结尾包含、包含、匹配、开头匹配、结尾匹配、包含匹配、格式匹配");
@@ -347,7 +355,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
                 user.sendMessage("匹配哪一个正则表达式呢？");
                 while (true) {
                     final String input = user.nextMessageOrExit().serialize();
-                    final String content = MiraiCodeUtil.contentToString(input);
+                    final String content = MiraiCodes.contentToString(input);
 
                     try {
                         trigger.setMessageFilter(new MessageFilter.Match(content));
@@ -361,7 +369,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
                 user.sendMessage("开头匹配哪一个正则表达式呢？");
                 while (true) {
                     final String input = user.nextMessageOrExit().serialize();
-                    final String content = MiraiCodeUtil.contentToString(input);
+                    final String content = MiraiCodes.contentToString(input);
 
                     try {
                         trigger.setMessageFilter(new MessageFilter.StartMatch(content));
@@ -375,7 +383,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
                 user.sendMessage("结尾匹配哪一个正则表达式呢？");
                 while (true) {
                     final String input = user.nextMessageOrExit().serialize();
-                    final String content = MiraiCodeUtil.contentToString(input);
+                    final String content = MiraiCodes.contentToString(input);
 
                     try {
                         trigger.setMessageFilter(new MessageFilter.EndMatch(content));
@@ -389,7 +397,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
                 user.sendMessage("包含匹配哪一个正则表达式呢？");
                 while (true) {
                     final String input = user.nextMessageOrExit().serialize();
-                    final String content = MiraiCodeUtil.contentToString(input);
+                    final String content = MiraiCodes.contentToString(input);
 
                     try {
                         trigger.setMessageFilter(new MessageFilter.ContainMatch(content));
@@ -403,7 +411,7 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
                 user.sendMessage("消息应该是什么格式呢？");
                 while (true) {
                     final String input = user.nextMessageOrExit().serialize();
-                    final String content = MiraiCodeUtil.contentToString(input);
+                    final String content = MiraiCodes.contentToString(input);
 
                     try {
                         trigger.setMessageFilter(new MessageFilter.Format(content));
@@ -420,122 +428,258 @@ public class ChannelInteractors extends SimpleInteractors<Plugin> {
         }
     }
 
-    void configTriggerBind(XiaomingUser user, Channel channel, QQTrigger<?> trigger) {
-        user.sendMessage("每个 QQ 绑定玩家名后才能触发吗？回复我「是」，或其他任意内容");
+    private final Map<Class<?>, Function<XiaoMingUser, Executor>> executorConfigurers = new HashMap<>();
+    {
+        executorConfigurers.put(ServerBroadcastExecutor.class, user -> {
+            final ServerBroadcastExecutor executor = new ServerBroadcastExecutor();
+            configExecutorServerTag(user, executor);
+
+            user.sendMessage("要在服务器上广播什么消息？");
+            executor.setFormat(MiraiCodes.contentToString(user.nextMessageOrExit().serialize()));
+
+            return executor;
+        });
+        executorConfigurers.put(ServerConsoleCommandExecutor.class, user -> {
+            final ServerConsoleCommandExecutor executor = new ServerConsoleCommandExecutor();
+            configExecutorServerTag(user, executor);
+
+            user.sendMessage("要在服务器上执行什么指令？");
+            executor.setCommand(MiraiCodes.contentToString(user.nextMessageOrExit().serialize()));
+
+            return executor;
+        });
+
+        executorConfigurers.put(XiaoMingSendMessageExecutor.class, user -> {
+            final XiaoMingSendMessageExecutor executor = new XiaoMingSendMessageExecutor();
+            user.sendMessage("要在 QQ 上发送什么消息？");
+            executor.setFormat(user.nextMessageOrExit().serialize());
+            return executor;
+        });
+    }
+
+    /** Server Tag */
+    void configExecutorServerTag(XiaoMingUser user, ServerTagExecutor trigger) {
+        user.sendMessage("这个操作要在带有什么标签的服务器上进行？回复「所有」或服务器标签");
         final String reply = user.nextMessageOrExit().serialize();
-        trigger.setMustBind(Objects.equals(reply, "是"));
+
+        final String serverTag;
+        if (Objects.equals(reply, "所有")) {
+            serverTag = Tags.ALL;
+        } else {
+            serverTag = reply;
+        }
+        trigger.setServerTag(serverTag);
     }
 
-    @Filter(Words.ADD + Words.PLAYER + Words.DEATH + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.PLAYER + Words.DEATH + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelPlayerDeathTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final PlayerDeathTrigger trigger = new PlayerDeathTrigger();
-        configTriggerServerTag(user, channel, trigger);
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
+    void config(XiaoMingUser user, XiaoMingSendMessageExecutor trigger) {
+        user.sendMessage("要在 QQ 上发送什么消息？");
+        trigger.setFormat(user.nextMessageOrExit().serialize());
     }
 
-    @Filter(Words.ADD + Words.PLAYER + Words.JOIN + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.PLAYER + Words.JOIN + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelPlayerJoinTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final PlayerJoinTrigger trigger = new PlayerJoinTrigger();
-        configTriggerServerTag(user, channel, trigger);
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
+    @Filter(Words.ADD + Words.WORK_GROUP + " {频道} {工作组}")
+    @Filter(Words.NEW + Words.WORK_GROUP + " {频道} {工作组}")
+    @Filter(Words.ADD + Words.CHANNEL + Words.WORK_GROUP + " {频道} {工作组}")
+    @Filter(Words.NEW + Words.CHANNEL + Words.WORK_GROUP + " {频道} {工作组}")
+    @Required("xmmc.admin.channel.config")
+    void addWorkGroup(XiaoMingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("工作组") String workGroupName) {
+        if (channel.getWorkGroup(workGroupName).isPresent()) {
+            user.sendError("频道「" + channel.getName() + "」已经存在工作组「" + workGroupName + "」了");
+            return;
+        }
 
-    @Filter(Words.ADD + Words.PLAYER + Words.QUIT + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.PLAYER + Words.QUIT + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelPlayerQuitTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final PlayerQuitTrigger trigger = new PlayerQuitTrigger();
-        configTriggerServerTag(user, channel, trigger);
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
+        // 找出向导
+        final List<Class<?>> triggerClasses = Collections.asUnmodifiableList(Trigger.TRIGGER_NAMES.keySet());
+        if (triggerClasses.isEmpty()) {
+            user.sendError("插件内部错误，请反馈给作者！");
+            return;
+        }
 
-    @Filter(Words.ADD + Words.PLAYER + Words.CHANGE_WORLD + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.PLAYER + Words.CHANGE_WORLD + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelPlayerChangeWorldTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final PlayerChangeWorldTrigger trigger = new PlayerChangeWorldTrigger();
-        configTriggerServerTag(user, channel, trigger);
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
+        // 选择向导
+        user.sendMessage("输入序号，选择工作组触发器类型吧！");
+        Trigger<?> trigger;
+        while (true) {
+            final Class<?> triggerClass = Interactors.indexChooser(user, triggerClasses, Trigger.TRIGGER_NAMES::get, 20);
+            final Function<XiaoMingUser, Trigger<?>> guider = triggerConfigurers.get(triggerClass);
+            if (guider == null) {
+                user.sendError("当前版本插件并未设计该类型触发器的向导，重新选择工作组触发器类型吧！");
+            } else {
+                trigger = guider.apply(user);
+                break;
+            }
+        }
 
-    @Filter(Words.ADD + Words.PLAYER + Words.CHAT + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.PLAYER + Words.CHAT + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelPlayerChatTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final PlayerChatTrigger trigger = new PlayerChatTrigger();
-        configTriggerServerTag(user, channel, trigger);
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerMessageFilter(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
+        // 配置执行器
+        final List<Class<?>> executorClasses = Collections.asUnmodifiableList(Executor.EXECUTOR_NAMES.keySet());
 
-    @Filter(Words.ADD + Words.GROUP + Words.MESSAGE + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.GROUP + Words.MESSAGE + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelGroupChatTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final GroupMessageTrigger trigger = new GroupMessageTrigger();
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerGroupTag(user, channel, trigger);
-        configTriggerBind(user, channel, trigger);
-        configTriggerMessageFilter(user, channel, trigger);
-        configTriggerPermission(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
+        user.sendMessage("输入序号，为该工作组添加第一个执行器吧！");
+        final Executor executor;
+        while (true) {
+            final Class<?> executorClass = Interactors.indexChooser(user, executorClasses, Executor.EXECUTOR_NAMES::get, 20);
+            final Function<XiaoMingUser, Executor> guider = executorConfigurers.get(executorClass);
+            if (guider == null) {
+                user.sendError("当前版本插件并未设计该类型执行器的向导，重新选择工作组执行器类型吧！");
+            } else {
+                executor = guider.apply(user);
+                break;
+            }
+        }
 
-    @Filter(Words.ADD + Words.PRIVATE + Words.MESSAGE + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.PRIVATE + Words.MESSAGE + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelPrivateChatTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final PrivateMessageTrigger trigger = new PrivateMessageTrigger();
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerBind(user, channel, trigger);
-        configTriggerMessageFilter(user, channel, trigger);
-        configTriggerPermission(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
-
-    @Filter(Words.ADD + Words.MEMBER + Words.MUTE + Words.TRIGGER + " {频道}")
-    @Filter(Words.ADD + Words.CHANNEL + Words.MEMBER + Words.MUTE + Words.TRIGGER + " {频道}")
-    @Required("xmmc.admin.channel.trigger.add")
-    void addChannelMemberMuteTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel) {
-        final MemberMuteTrigger trigger = new MemberMuteTrigger();
-        configTriggerAccountTag(user, channel, trigger);
-        configTriggerBind(user, channel, trigger);
-        configTriggerPermission(user, channel, trigger);
-        configTriggerMessages(user, channel, trigger);
-        configTriggerNameThenAdd(user, channel, trigger);
-    }
-
-    @Filter(Words.REMOVE + Words.CHANNEL + Words.TRIGGER + " {频道} {触发器}")
-    @Required("xmmc.admin.channel.trigger.remove")
-    void removeChannelTrigger(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("触发器") Trigger trigger) {
-        channel.getTriggers().remove(trigger.getName());
+        final WorkGroup workGroup = new WorkGroup();
+        workGroup.setName(workGroupName);
+        workGroup.setTrigger(trigger);
+        workGroup.setExecutors(Collections.asList(executor));
+        channel.getWorkGroups().put(workGroupName, workGroup);
         plugin.getChannelConfiguration().readyToSave();
-        user.sendMessage("已删除频道「" + channel.getName() + "」的触发器「" + trigger.getName() + "」");
+
+        user.sendMessage("成功为频道「" + channel.getName() + "」添加了工作组「" + workGroupName + "」");
     }
 
-    @Filter(Words.CHANNEL + Words.TRIGGER + " {频道} {触发器}")
-    @Required("xmmc.admin.channel.trigger.look")
-    void channelTriggerInfo(XiaomingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("触发器") Trigger trigger) {
-        user.sendMessage("「触发器信息」\n" +
-                "描述：" + trigger.getDescription() + "\n" +
-                "消息：" + Optional.ofNullable(CollectionUtil.toIndexString(trigger.getMessages()))
-                            .map(x -> "\n" + x)
-                            .orElse("（无）"));
+    @Filter(Words.REMOVE + Words.CHANNEL + Words.WORK_GROUP + " {频道} {工作组}")
+    @Filter(Words.REMOVE + Words.WORK_GROUP + " {频道} {工作组}")
+    @Required("xmmc.admin.channel.config")
+    void removeWorkGroup(XiaoMingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("工作组") WorkGroup workGroup) {
+        channel.getWorkGroups().remove(workGroup.getName());
+        plugin.getChannelConfiguration().readyToSave();
+
+        user.sendMessage("成功删除频道「" + channel.getName() + "」的工作组「" + workGroup.getName() + "」");
+    }
+
+    @Filter(Words.CHANNEL + Words.WORK_GROUP + " {频道}")
+    @Required("xmmc.admin.channel.look")
+    void channelWorkGroupInfo(XiaoMingUser user, @FilterParameter("频道") Channel channel) {
+        final Map<String, WorkGroup> workGroups = channel.getWorkGroups();
+        if (workGroups.isEmpty()) {
+            user.sendError("频道「" + channel.getName() + "」没有任何工作组");
+            return;
+        }
+
+        user.sendMessage("「频道工作组信息」\n" +
+                CollectionUtil.toIndexString(workGroups.entrySet(), x -> {
+                    final WorkGroup workGroup = x.getValue();
+                    final String description = Trigger.TRIGGER_NAMES.get(workGroup.getTrigger().getClass()) + " => " +
+                            Optional.ofNullable(CollectionUtil.toString(workGroup.getExecutors(), y -> Executor.EXECUTOR_NAMES.get(y.getClass()), " -> ")).orElse("（无执行器）");
+                    return description;
+                })
+        );
+    }
+
+    @Filter(Words.REMOVE + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组} {执行器序号}")
+    @Filter(Words.REMOVE + Words.CHANNEL + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组} {执行器序号}")
+    @Required("xmmc.admin.channel.config")
+    void removeWorkGroupExecutor(XiaoMingUser user,
+                                 @FilterParameter("频道") Channel channel,
+                                 @FilterParameter("工作组") WorkGroup workGroup,
+                                 @FilterParameter("执行器序号") int originalIndex) {
+        final int index = originalIndex - 1;
+        final List<Executor> executors = workGroup.getExecutors();
+        if (!Indexs.isLegal(originalIndex, executors.size())) {
+            user.sendError("执行器序号「" + originalIndex + "」错误，应该在 1 到 " + executors.size() + " 之间");
+            return;
+        }
+
+        final Executor executor = executors.remove(index);
+        plugin.getChannelConfiguration().readyToSave();
+
+        if (executors.isEmpty()) {
+            user.sendMessage("成功删除工作组的第 " + originalIndex + " 个执行器（" + Executor.EXECUTOR_NAMES.get(executor.getClass()) + "），现在该工作组没有任何执行器");
+        } else {
+            user.sendMessage("成功删除工作组的第 " + originalIndex + " 个执行器（" + Executor.EXECUTOR_NAMES.get(executor.getClass()) + "）");
+        }
+    }
+
+    @Filter(Words.ADD + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组}")
+    @Filter(Words.NEW + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组}")
+    @Required("xmmc.admin.channel.config")
+    void addWorkGroupExecutor(XiaoMingUser user,
+                              @FilterParameter("频道") Channel channel,
+                              @FilterParameter("工作组") WorkGroup workGroup) {
+        user.sendMessage("输入序号，选择你要创建的执行器类型吧！");
+
+        final Executor executor;
+        final List<Class<?>> executorClasses = Collections.asUnmodifiableList(Executor.EXECUTOR_NAMES.keySet());
+        while (true) {
+            final Class<?> executorClass = Interactors.indexChooser(user, executorClasses, Executor.EXECUTOR_NAMES::get, 20);
+            final Function<XiaoMingUser, Executor> guider = executorConfigurers.get(executorClass);
+            if (guider == null) {
+                user.sendError("当前版本插件并未设计该类型执行器的向导，重新选择工作组执行器类型吧！");
+            } else {
+                executor = guider.apply(user);
+                break;
+            }
+        }
+
+        workGroup.getExecutors().add(executor);
+        plugin.getChannelConfiguration().readyToSave();
+        user.sendMessage("成功为频道「" + channel.getName() + "」的工作组「" + workGroup.getName() + "」添加了一个执行器（" + Executor.EXECUTOR_NAMES.get(executor.getClass()) + "）");
+    }
+
+    @Filter(Words.INSERT + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组} {插入位置}")
+    @Filter(Words.INSERT + Words.CHANNEL + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组} {插入位置}")
+    @Required("xmmc.admin.channel.config")
+    void insertWorkGroupExecutor(XiaoMingUser user,
+                                 @FilterParameter("频道") Channel channel,
+                                 @FilterParameter("工作组") WorkGroup workGroup,
+                                 @FilterParameter("插入位置") int originalIndex) {
+        final int index = originalIndex - 1;
+        final List<Executor> executors = workGroup.getExecutors();
+        if (index < 0 || index > executors.size()) {
+            user.sendError("要插入的执行器位置 " + originalIndex + " 错误，应该在 1 到 " + (executors.size() + 1) + " 之间");
+            return;
+        }
+
+        user.sendMessage("输入序号，选择你要插入的执行器类型吧！");
+
+        final Executor executor;
+        final List<Class<?>> executorClasses = Collections.asUnmodifiableList(Executor.EXECUTOR_NAMES.keySet());
+        while (true) {
+            final Class<?> executorClass = Interactors.indexChooser(user, executorClasses, Executor.EXECUTOR_NAMES::get, 20);
+            final Function<XiaoMingUser, Executor> guider = executorConfigurers.get(executorClass);
+            if (guider == null) {
+                user.sendError("当前版本插件并未设计该类型执行器的向导，重新选择工作组执行器类型吧！");
+            } else {
+                executor = guider.apply(user);
+                break;
+            }
+        }
+
+        executors.add(index, executor);
+        plugin.getChannelConfiguration().readyToSave();
+        user.sendMessage("成功在频道「" + channel.getName() + "」的工作组「" + workGroup.getName() + "」的第 " + originalIndex + " 个执行器前插入了一个新的执行器（" + Executor.EXECUTOR_NAMES.get(executor.getClass()) + "）");
+    }
+
+    @Filter(Words.SET + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组} {执行器位置}")
+    @Filter(Words.SET + Words.CHANNEL + Words.WORK_GROUP + Words.EXECUTOR + " {频道} {工作组} {执行器位置}")
+    @Required("xmmc.admin.channel.config")
+    void setWorkGroupExecutor(XiaoMingUser user,
+                              @FilterParameter("频道") Channel channel,
+                              @FilterParameter("工作组") WorkGroup workGroup,
+                              @FilterParameter("执行器位置") int originalIndex) {
+        final int index = originalIndex - 1;
+        final List<Executor> executors = workGroup.getExecutors();
+        if (Indexs.isLegal(index, executors.size())) {
+            user.sendError("执行器位置 " + originalIndex + " 错误，应该在 1 到 " + executors.size() + " 之间");
+            return;
+        }
+
+        final Executor elderExecutor = executors.get(index);
+
+        user.sendMessage("输入序号，选择你要设置的执行器类型吧！");
+
+        final Executor executor;
+        final List<Class<?>> executorClasses = Collections.asUnmodifiableList(Executor.EXECUTOR_NAMES.keySet());
+        while (true) {
+            final Class<?> executorClass = Interactors.indexChooser(user, executorClasses, Executor.EXECUTOR_NAMES::get, 20);
+            final Function<XiaoMingUser, Executor> guider = executorConfigurers.get(executorClass);
+            if (guider == null) {
+                user.sendError("当前版本插件并未设计该类型执行器的向导，重新选择工作组执行器类型吧！");
+            } else {
+                executor = guider.apply(user);
+                break;
+            }
+        }
+
+        executors.add(index, executor);
+        plugin.getChannelConfiguration().readyToSave();
+        user.sendMessage("成功在频道「" + channel.getName() + "」的工作组「" + workGroup.getName() + "」的第 " + originalIndex + " 个执行器修改为新的执行器（" + Executor.EXECUTOR_NAMES.get(executor.getClass()) + "）");
     }
 }

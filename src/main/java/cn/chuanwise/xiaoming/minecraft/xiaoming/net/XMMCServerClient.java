@@ -1,38 +1,38 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
 import cn.chuanwise.mclib.net.protocol.NetLibProtocol;
+import cn.chuanwise.mclib.net.protocol.SendSameMessageInform;
 import cn.chuanwise.net.netty.packet.PacketHandler;
-import cn.chuanwise.util.ConditionUtil;
-import cn.chuanwise.util.TimeUtil;
+import cn.chuanwise.toolkit.container.Container;
+import cn.chuanwise.util.CollectionUtil;
+import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.util.StringUtil;
+import cn.chuanwise.util.Times;
 import cn.chuanwise.xiaoming.contact.contact.GroupContact;
-import cn.chuanwise.xiaoming.contact.contact.XiaomingContact;
+import cn.chuanwise.xiaoming.contact.contact.XiaoMingContact;
 import cn.chuanwise.xiaoming.contact.message.Message;
 import cn.chuanwise.xiaoming.minecraft.protocol.*;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerInfo;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerChatEvent;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerJoinEvent;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerKickEvent;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerQuitEvent;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerVerifyCodeConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.StringGenerator;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.*;
 import cn.chuanwise.xiaoming.object.PluginObjectImpl;
 import lombok.Data;
 
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 @Data
 @SuppressWarnings("all")
-public class XMMCServerClient extends PluginObjectImpl<Plugin> {
+public class XMMCServerClient extends PluginObjectImpl<XMMCXiaoMingPlugin> {
     protected final PacketHandler packetHandler;
     protected final OnlineClient onlineClient;
 
     public XMMCServerClient(OnlineClient onlineClient, PacketHandler packetHandler) {
         setPlugin(onlineClient.getPlugin());
-        ConditionUtil.notNull(packetHandler, "packet handler");
+        Preconditions.nonNull(packetHandler, "packet handler");
 
         this.packetHandler = packetHandler;
         this.onlineClient = onlineClient;
@@ -44,34 +44,95 @@ public class XMMCServerClient extends PluginObjectImpl<Plugin> {
 
     private void setupBaseListeners() {
         packetHandler.setOnRequest(XMMCProtocol.REQUEST_CONFIRM_ACTIVE, v -> v);
+        packetHandler.setOnInform(XMMCProtocol.INFORM_MESSAGE, argument -> {
+            plugin.getXiaoMingBot().getEventManager().callEvent(new ServerMessageEvent(onlineClient, argument));
+        });
+    }
+
+    public void sendMessage(String message) {
+        packetHandler.inform(XMMCProtocol.INFORM_MESSAGE, message);
+    }
+
+    public void sendWideMessage(Set<String> playerNames, String message) {
+        packetHandler.inform(XMMCProtocol.INFORM_WIDE_MESSAGE, new SendSameMessageInform(playerNames, message));
     }
 
     private void setupTriggerForwarders() {
         final Server server = plugin.getServer();
 
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_CHANGE_WORLD_EVENT, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
+        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_CHANGE_WORLD_EVENT, x -> {
+            final PlayerChangeWorldEvent event = new PlayerChangeWorldEvent(x, onlineClient);
+            xiaoMingBot.getEventManager().callEvent(event);
+        });
+        packetHandler.setOnInform(XMMCProtocol.INFORM_TPS, x -> {
+            final ServerTpsEvent event = new ServerTpsEvent(x, onlineClient);
+            xiaoMingBot.getEventManager().callEvent(event);
+        });
         packetHandler.setOnRequest(NetLibProtocol.REQUEST_PLAYER_CHAT_EVENT, x -> {
             final PlayerChatEvent event = new PlayerChatEvent(x, onlineClient);
-            xiaomingBot.getEventManager().callEvent(event);
+            xiaoMingBot.getEventManager().callEvent(event);
             return event.isCancelled();
         });
         packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_JOIN_EVENT, x -> {
             final PlayerJoinEvent event = new PlayerJoinEvent(x, onlineClient);
-            xiaomingBot.getEventManager().callEvent(event);
+            xiaoMingBot.getEventManager().callEvent(event);
         });
         packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_QUIT_EVENT, x -> {
             final PlayerQuitEvent event = new PlayerQuitEvent(x, onlineClient);
-            xiaomingBot.getEventManager().callEvent(event);
+            xiaoMingBot.getEventManager().callEvent(event);
         });
-        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_DEATH_EVENT, x -> server.getPlugin().getChannelConfiguration().channelHandle(x, onlineClient));
+        packetHandler.setOnInform(NetLibProtocol.INFORM_PLAYER_DEATH_EVENT, x -> {
+            final PlayerDeathEvent event = new PlayerDeathEvent(x, onlineClient);
+            xiaoMingBot.getEventManager().callEvent(event);
+        });
         packetHandler.setOnRequest(NetLibProtocol.REQUEST_PLAYER_KICK_EVENT, x -> {
             final PlayerKickEvent event = new PlayerKickEvent(x, onlineClient);
-            xiaomingBot.getEventManager().callEvent(event);
+            xiaoMingBot.getEventManager().callEvent(event);
             return event.isCancelled();
         });
     }
 
     private void setupPlayerInfoListeners() {
+        packetHandler.setOnRequest(XMMCProtocol.REQUEST_PLAYER_BIND_INFO, request -> {
+            return plugin.getPlayerConfiguration().getPlayerInfo(request)
+                    .map(x -> {
+                        return new PlayerBindInfo(x.getPlayerNames(), x.getAccountCodes());
+                    })
+                    .orElse(null);
+        });
+        packetHandler.setOnRequest(XMMCProtocol.REQUEST_PLAYER_VERIFY_CODE, playerName -> {
+            // 如果已经绑定了，就不分配了
+            if (plugin.getPlayerConfiguration().getPlayerInfo(playerName).isPresent()) {
+                return null;
+            }
+
+            // 否则分配一个值，并回复
+            final PlayerVerifyCodeConfiguration configuration = plugin.getPlayerVerifyCodeConfiguration();
+            final PlayerVerifyCodeInfo info;
+
+            // 先查找是否有现成的
+            final Map<String, PlayerVerifyCodeConfiguration.VerifyInfo> verifyInfo = configuration.getVerifyInfo();
+            final Container<Map.Entry<String, PlayerVerifyCodeConfiguration.VerifyInfo>> container =
+                    CollectionUtil.findFirst(verifyInfo.entrySet(), x -> Objects.equals(x.getValue().getPlayerName(), playerName));
+
+            String verifyCode;
+            if (container.isEmpty()) {
+                final StringGenerator generator = plugin.getBaseConfiguration().getGenerator().getVerifyCode();
+                verifyCode = StringUtil.randomString(generator.getCharacters(), generator.getLength());
+                while (verifyInfo.containsKey(verifyCode)) {
+                    verifyCode = StringUtil.randomString(generator.getCharacters(), generator.getLength());
+                }
+
+                verifyInfo.put(verifyCode, new PlayerVerifyCodeConfiguration.VerifyInfo(System.currentTimeMillis(), playerName));
+            } else {
+                final Map.Entry<String, PlayerVerifyCodeConfiguration.VerifyInfo> entry = container.get();
+                verifyCode = entry.getKey();
+                entry.getValue().setTimeMillis(System.currentTimeMillis());
+            }
+            configuration.readyToSave();
+            return new PlayerVerifyCodeInfo(verifyCode, configuration.getTimeout());
+        });
+
         packetHandler.setOnRequest(XMMCProtocol.REQUEST_PLAYER_BIND, request -> {
             final String playerName = request.getPlayerName();
             final long accountCode = request.getAccountCode();
@@ -90,24 +151,24 @@ public class XMMCServerClient extends PluginObjectImpl<Plugin> {
             final Optional<PlayerInfo> optionalSameNamePlayerInfo = playerConfiguration.getPlayerInfo(playerName);
             if (optionalSameNamePlayerInfo.isPresent()) {
                 final PlayerInfo sameNamePlayerInfo = optionalSameNamePlayerInfo.get();
-                ConditionUtil.checkState(!sameNamePlayerInfo.hasAccountCode(accountCode), "internal error");
+                Preconditions.state(!sameNamePlayerInfo.hasAccountCode(accountCode), "internal error");
                 return new PlayerBindResponse.Error(PlayerBindResponse.Error.Type.OTHER);
             }
 
             // 找到这个用户
             final long timeout = playerConfiguration.getBoundTimeout();
-            final String timeoutLength = TimeUtil.toTimeLength(timeout);
+            final String timeoutLength = Times.toTimeLength(timeout);
             final String message = "位于「" + onlineClient.getServerInfo().getName() + "」上的玩家「" + playerName + "」是你吗？\n" +
                     "这名玩家请求绑定在你的 QQ 上。同意绑定，请在 " + timeoutLength + " 内回复「绑定」。\n" +
                     "超时或其他任何回复将取消绑定";
-            final Optional<XiaomingContact> optionalContact = plugin.getXiaomingBot().getContactManager().sendMessagePossibly(accountCode, message);
+            final Optional<XiaoMingContact> optionalContact = plugin.getXiaoMingBot().getContactManager().sendMessagePossibly(accountCode, message);
             if (!optionalContact.isPresent()) {
                 return new PlayerBindResponse.Error(PlayerBindResponse.Error.Type.FAILED);
             }
-            final XiaomingContact xiaomingContact = optionalContact.get();
+            final XiaoMingContact xiaomingContact = optionalContact.get();
 
             // 启动新线程等待结果
-            xiaomingBot.getScheduler().run(() -> {
+            xiaoMingBot.getScheduler().run(() -> {
                 PlayerBindResultInform inform;
                 try {
                     boolean bound = false;

@@ -1,35 +1,35 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.mclib.util.ColorUtil;
+import cn.chuanwise.mclib.util.ColorCodes;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.TimeUtil;
+import cn.chuanwise.util.Times;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.protocol.OnlinePlayerResponse;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.SessionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
-import cn.chuanwise.xiaoming.user.XiaomingUser;
+import cn.chuanwise.xiaoming.user.XiaoMingUser;
 
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("all")
-public class StateInteractors extends SimpleInteractors<Plugin> {
+public class StateInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
     public Server getServer() {
         return plugin.getServer();
     }
 
     @Filter(Words.ONLINE + Words.SERVER)
     @Required("xmmc.admin.onlineServers")
-    void onlineServers(XiaomingUser user) {
+    void onlineServers(XiaoMingUser user) {
         final Server server = getServer();
 
         if (!server.isBound()) {
@@ -42,17 +42,17 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
         } else if (onlineClients.size() == 1) {
             final OnlineClient onlineClient = onlineClients.get(0);
             user.sendMessage("目前只有「" + onlineClient.getServerInfo().getName() + "」在线，" +
-                    "已在线 " + TimeUtil.toTimeLength(System.currentTimeMillis() - onlineClient.getConnectTimeMillis()));
+                    "已在线 " + Times.toTimeLength(System.currentTimeMillis() - onlineClient.getConnectTimeMillis()));
         } else {
             user.sendMessage("在线服务器：\n" +
                     CollectionUtil.toIndexString(onlineClients, x -> x.getServerInfo().getName() +
-                            "（已在线 " + TimeUtil.toTimeLength(System.currentTimeMillis() - x.getConnectTimeMillis()) + "）"));
+                            "（已在线 " + Times.toTimeLength(System.currentTimeMillis() - x.getConnectTimeMillis()) + "）"));
         }
     }
 
     @Filter(Words.DISCONNECT + Words.SERVER + " {服务器名}")
     @Required("xmmc.admin.online.disconnect")
-    void disconnectOnlineClient(XiaomingUser user, @FilterParameter("服务器名") OnlineClient onlineClient) {
+    void disconnectOnlineClient(XiaoMingUser user, @FilterParameter("服务器名") OnlineClient onlineClient) {
         final ServerInfo serverInfo = onlineClient.getServerInfo();
         onlineClient.disconnect().addListener(x -> {
             if (x.isSuccess()) {
@@ -65,14 +65,14 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
 
     @Filter(Words.SERVER)
     @Required("xmmc.admin.server.list")
-    void listServers(XiaomingUser user) {
-        final Map<String, ServerInfo> servers = plugin.getPluginConfiguration().getServers();
+    void listServers(XiaoMingUser user) {
+        final Map<String, ServerInfo> servers = plugin.getSessionConfiguration().getServers();
         if (servers.isEmpty()) {
             user.sendError("小明还不认识任何服务器");
         } else {
             user.sendMessage("小明认识 " + servers.size() + " 个服务器：\n" +
                     CollectionUtil.toIndexString(servers.values(), x -> {
-                        final String lastOnlineInfo = x.getLastConnectTimeMillis() == 0 ? "从未连接" : ("上次在线是" + TimeUtil.beforeTime(x.getLastConnectTimeMillis()));
+                        final String lastOnlineInfo = x.getLastConnectTimeMillis() == 0 ? "从未连接" : ("上次在线是" + Times.beforeTime(x.getLastConnectTimeMillis()));
                         final String message = x.getName() + "（" + lastOnlineInfo + "）";
                         return message;
                     }));
@@ -81,21 +81,21 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
 
     @Filter(Words.SERVER + " {服务器}")
     @Required("xmmc.admin.server.look")
-    void serverInfo(XiaomingUser user, @FilterParameter("服务器") ServerInfo serverInfo) {
+    void serverInfo(XiaoMingUser user, @FilterParameter("服务器") ServerInfo serverInfo) {
         user.sendMessage("「服务器信息」\n" +
                 "服务器名：" + serverInfo.getName() + "\n" +
-                "注册时间：" + TimeUtil.beforeTime(serverInfo.getRegisterTimeMillis()) + "\n" +
-                "上次在线：" + (serverInfo.getLastConnectTimeMillis() == 0 ? "（从未连接过）" : TimeUtil.beforeTime(serverInfo.getLastConnectTimeMillis())) + "\n" +
+                "注册时间：" + Times.beforeTime(serverInfo.getRegisterTimeMillis()) + "\n" +
+                "上次在线：" + (serverInfo.getLastConnectTimeMillis() == 0 ? "（从未连接过）" : Times.beforeTime(serverInfo.getLastConnectTimeMillis())) + "\n" +
                 "标签：" + serverInfo.getTags()
         );
     }
 
     @Filter(Words.REMOVE + Words.SERVER + " {服务器名}")
     @Required("xmmc.admin.server.remove")
-    void removeServer(XiaomingUser user, @FilterParameter("服务器名") ServerInfo serverInfo) {
-        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
-        pluginConfiguration.getServers().remove(serverInfo.getName());
-        pluginConfiguration.readyToSave();
+    void removeServer(XiaoMingUser user, @FilterParameter("服务器名") ServerInfo serverInfo) {
+        final SessionConfiguration sessionConfiguration = plugin.getSessionConfiguration();
+        sessionConfiguration.getServers().remove(serverInfo.getName());
+        sessionConfiguration.readyToSave();
 
         // 尝试断开
         final Server server = getServer();
@@ -115,8 +115,11 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
     }
 
     @Filter(Words.ONLINE + Words.PLAYER + " {服务器名}")
+    @Filter(Words.ONLINE + Words.POPULATION + " {服务器名}")
+    @Filter(Words.PLAYER + Words.LIST + " {服务器名}")
+    @Filter(Words.ALL + Words.PLAYER + " {服务器名}")
     @Required("xmmc.user.onlinePlayers")
-    void onlinePlayers(XiaomingUser user, @FilterParameter("服务器名") OnlineClient onlineClient) throws InterruptedException, TimeoutException {
+    void onlinePlayers(XiaoMingUser user, @FilterParameter("服务器名") OnlineClient onlineClient) throws InterruptedException, TimeoutException {
         final Set<OnlinePlayerResponse.PlayerKey> onlinePlayerKeys = onlineClient.getServerClient().getOnlinePlayerKeys();
         if (onlinePlayerKeys.isEmpty()) {
             user.sendError("服务器上没有任何人哦");
@@ -128,12 +131,15 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
                 .collect(Collectors.toList());
 
         user.sendMessage("服务器上有 " + playerNames.size() + " 个人：\n" +
-                ColorUtil.clearColors(CollectionUtil.toIndexString(playerNames)));
+                ColorCodes.clearColors(CollectionUtil.toIndexString(playerNames)));
     }
 
     @Filter(Words.ONLINE + Words.PLAYER)
+    @Filter(Words.ONLINE + Words.POPULATION)
+    @Filter(Words.PLAYER + Words.LIST)
+    @Filter(Words.ALL + Words.PLAYER)
     @Required("xmmc.user.onlinePlayers")
-    void onlinePlayers(XiaomingUser user) throws InterruptedException, TimeoutException {
+    void onlinePlayers(XiaoMingUser user) throws InterruptedException, TimeoutException {
         final Server server = getServer();
         if (!server.isBound()) {
             user.sendError("服务器尚未启动！");
@@ -156,7 +162,7 @@ public class StateInteractors extends SimpleInteractors<Plugin> {
             receipt.put(onlineClient.getServerInfo().getName(), playerNames);
         }
 
-        user.sendMessage(ColorUtil.clearColors(CollectionUtil.toIndexString(receipt.entrySet(), x -> x.getKey() + "：" +
+        user.sendMessage(ColorCodes.clearColors(CollectionUtil.toIndexString(receipt.entrySet(), x -> x.getKey() + "：" +
                 Optional.ofNullable(CollectionUtil.toString(x.getValue())).orElse("（无）"))));
     }
 }

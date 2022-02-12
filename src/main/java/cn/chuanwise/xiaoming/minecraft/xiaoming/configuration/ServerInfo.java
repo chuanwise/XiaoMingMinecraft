@@ -2,7 +2,7 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming.configuration;
 
 import cn.chuanwise.api.AbstractOriginalTagMarkable;
 import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.TagUtil;
+import cn.chuanwise.util.Tags;
 import lombok.Data;
 
 import java.util.Set;
@@ -17,6 +17,6 @@ public class ServerInfo extends AbstractOriginalTagMarkable {
 
     @Override
     public Set<String> getOriginalTags() {
-        return CollectionUtil.asSet(name, TagUtil.ALL);
+        return CollectionUtil.asSet(name, Tags.ALL);
     }
 }

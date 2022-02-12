@@ -2,16 +2,19 @@ package cn.chuanwise.xiaoming.minecraft.bukkit.net;
 
 import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
 import cn.chuanwise.mclib.bukkit.ask.Asker;
+import cn.chuanwise.mclib.bukkit.event.BukkitTpsEvent;
 import cn.chuanwise.mclib.bukkit.util.PlayerUtil;
 import cn.chuanwise.net.netty.packet.PacketHandler;
-import cn.chuanwise.util.ConditionUtil;
-import cn.chuanwise.util.TimeUtil;
-import cn.chuanwise.xiaoming.minecraft.bukkit.Plugin;
+import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.util.Times;
+import cn.chuanwise.xiaoming.minecraft.bukkit.XMMCBukkitPlugin;
+import cn.chuanwise.xiaoming.minecraft.bukkit.event.XiaoMingMessageEvent;
 import cn.chuanwise.xiaoming.minecraft.protocol.*;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.List;
@@ -22,20 +25,38 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Getter
-public class XMMCClientContact extends BukkitPluginObject<Plugin> implements Listener {
+public class XMMCClientContact extends BukkitPluginObject<XMMCBukkitPlugin> implements Listener {
     protected final PacketHandler packetHandler;
 
-    public XMMCClientContact(Plugin plugin, PacketHandler packetHandler) {
+    public XMMCClientContact(XMMCBukkitPlugin plugin, PacketHandler packetHandler) {
         super(plugin);
-        ConditionUtil.notNull(packetHandler, "packet handler");
+        Preconditions.nonNull(packetHandler, "packet handler");
         this.packetHandler = packetHandler;
 
         setupBaseListeners();
         setupMessageListeners();
     }
 
+    public Optional<PlayerBindInfo> requestBindInfo(String playerName) throws InterruptedException, TimeoutException {
+        return Optional.ofNullable(packetHandler.request(XMMCProtocol.REQUEST_PLAYER_BIND_INFO, playerName));
+    }
+
+    public Optional<PlayerVerifyCodeInfo> requestAllocatePlayerVerifyCode(String playerName) throws InterruptedException, TimeoutException {
+        return Optional.ofNullable(packetHandler.request(XMMCProtocol.REQUEST_PLAYER_VERIFY_CODE, playerName));
+    }
+
     private void setupBaseListeners() {
         packetHandler.setOnRequest(XMMCProtocol.REQUEST_CONFIRM_ACTIVE, v -> v);
+        packetHandler.setOnInform(XMMCProtocol.INFORM_MESSAGE, argument -> {
+            plugin.getServer().getPluginManager().callEvent(new XiaoMingMessageEvent(argument));
+        });
+        packetHandler.setOnInform(XMMCProtocol.INFORM_WIDE_MESSAGE, argument -> {
+            for (Player onlinePlayer : plugin.getServer().getOnlinePlayers()) {
+                if (argument.getPlayerNames().contains(onlinePlayer.getName())) {
+                    onlinePlayer.sendMessage(argument.getMessage());
+                }
+            }
+        });
     }
 
     private void setupMessageListeners() {
@@ -83,7 +104,7 @@ public class XMMCClientContact extends BukkitPluginObject<Plugin> implements Lis
             player.sendMessage(ChatColor.WHITE + "接受请求，输入 " + ChatColor.GRAY + "/" + ChatColor.GREEN + "xmaccept");
             player.sendMessage(ChatColor.WHITE + "拒绝请求，输入 " + ChatColor.GRAY + "/" + ChatColor.YELLOW + "xmdeny");
             player.sendMessage(ChatColor.WHITE + "忽略请求，输入 " + ChatColor.GRAY + "/" + ChatColor.YELLOW + "xmignore");
-            player.sendMessage(ChatColor.GRAY + "此请求将在 " + ChatColor.AQUA + TimeUtil.toTimeLength(timeout) + ChatColor.GRAY + " 后自动取消");
+            player.sendMessage(ChatColor.GRAY + "此请求将在 " + ChatColor.AQUA + Times.toTimeLength(timeout) + ChatColor.GRAY + " 后自动取消");
 
             // 等待消息
             switch (asker.get(timeout)) {
@@ -121,5 +142,14 @@ public class XMMCClientContact extends BukkitPluginObject<Plugin> implements Lis
             packetHandler.getContext().channel().close();
         }
         return active;
+    }
+
+    public void sendMessage(String message) {
+        packetHandler.inform(XMMCProtocol.INFORM_MESSAGE, message);
+    }
+
+    @EventHandler
+    protected void onTpsEvent(BukkitTpsEvent event) {
+        packetHandler.inform(XMMCProtocol.INFORM_TPS, event.getTps());
     }
 }

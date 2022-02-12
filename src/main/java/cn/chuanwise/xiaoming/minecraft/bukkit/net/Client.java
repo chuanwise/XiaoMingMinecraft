@@ -1,18 +1,21 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit.net;
 
-import cn.chuanwise.api.Logger;
 import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
 import cn.chuanwise.mclib.net.bukkit.BukkitLocalContact;
-import cn.chuanwise.net.netty.*;
-import cn.chuanwise.net.netty.packet.JsonPacketCodeC;
+import cn.chuanwise.net.netty.event.*;
+import cn.chuanwise.net.netty.exception.ProtocolException;
+import cn.chuanwise.net.netty.handler.DebugDuplexHandler;
+import cn.chuanwise.net.netty.handler.ReconnectStateHandler;
+import cn.chuanwise.net.netty.packet.JsonPacketCodec;
 import cn.chuanwise.net.netty.packet.PacketHandler;
+import cn.chuanwise.net.netty.protocol.BaseProtocol;
 import cn.chuanwise.net.packet.*;
 import cn.chuanwise.toolkit.box.Box;
 import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.ThrowableUtil;
-import cn.chuanwise.util.TimeUtil;
-import cn.chuanwise.xiaoming.minecraft.bukkit.Configuration;
-import cn.chuanwise.xiaoming.minecraft.bukkit.Plugin;
+import cn.chuanwise.util.Throwables;
+import cn.chuanwise.util.Times;
+import cn.chuanwise.xiaoming.minecraft.bukkit.XMMCBukkitPlugin;
+import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
@@ -44,19 +47,17 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 @Getter
-public class Client extends BukkitPluginObject<Plugin> {
+public class Client extends BukkitPluginObject<XMMCBukkitPlugin> {
     /** 连接的引导器 */
     protected final Bootstrap bootstrap = new Bootstrap();
 
     protected PacketHandler packetHandler = new PacketHandler();
 
     /** 本地会话处理器 */
-    protected final BukkitLocalContact<Plugin> localContact = new BukkitLocalContact<>(packetHandler, communicator().toLogger(), plugin);
+    protected final BukkitLocalContact<XMMCBukkitPlugin> localContact = new BukkitLocalContact<>(packetHandler, communicator().toLogger(), plugin);
     protected final XMMCClientContact clientContact = new XMMCClientContact(plugin, packetHandler);
 
     /** 重连工具 */
-    protected final ReconnectHandler reconnectHandler = new ReconnectHandler(bootstrap);
-    protected final ListenerHandler listenerHandler = new ListenerHandler();
     protected NioEventLoopGroup executors;
 
     @Getter(AccessLevel.NONE)
@@ -66,6 +67,114 @@ public class Client extends BukkitPluginObject<Plugin> {
     private final Object verifyCondition = new Object();
 
     protected volatile String name;
+
+    /** 负责指导重连操作的 Handler */
+    private final ReconnectStateHandler reconnectStateHandler = new ReconnectStateHandler();
+
+    /**
+     * 专门负责客户端连接的 Handler
+     * 其他任何地方都禁止调用 {@code bootstrap.connect()}
+     * 如需连接，应该调用 {@link ConnectHandler#connect()}
+     */
+    @ChannelHandler.Sharable
+    private class ConnectHandler extends ChannelInboundHandlerAdapter {
+        /** 检测连接状态变化的量 */
+        private volatile boolean connected;
+
+        @Override
+        public void channelActive(ChannelHandlerContext context) throws Exception {
+            connected = true;
+            channel = context.channel();
+            super.channelActive(context);
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext context) throws Exception {
+            connected = false;
+            channel = null;
+            super.channelInactive(context);
+        }
+
+        private ChannelFuture connectFuture;
+
+        /**
+         * 唯一的连接方法
+         * @return 如果已经连接到服务器了，返回 {@link Optional#empty()}
+         */
+        public Optional<ChannelFuture> connect() {
+            if (connected) {
+                return Optional.empty();
+            }
+            if (connectFuture == null) {
+                connectFuture = bootstrap.connect();
+
+                // 连接结束后，更改 channel 并删除本次的 connectFuture
+                connectFuture.addListener(future -> {
+                    if (future.isSuccess()) {
+                        channel = connectFuture.channel();
+                    } else {
+                        channel = null;
+                    }
+                    connectFuture = null;
+                });
+            }
+            return Optional.of(connectFuture);
+        }
+
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+            if (evt instanceof ConnectEvent) {
+                connect();
+                return;
+            }
+            if (evt instanceof ReconnectInterruptedEvent) {
+                if (connectFuture != null) {
+                    communicator().consoleWarn("net.reconnect.cancelled");
+                    connectFuture.cancel(true);
+                }
+                return;
+            }
+            super.userEventTriggered(ctx, evt);
+        }
+    }
+    @Getter(AccessLevel.NONE)
+    private final ConnectHandler connectHandler = new ConnectHandler();
+
+    /** 负责显示重连提示的 Handler */
+    @ChannelHandler.Sharable
+    private class ReconnectNoticeHandler extends ChannelInboundHandlerAdapter {
+        @Override
+        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+            if (evt instanceof ReconnectDelayEvent) {
+                onReconnectDelay((ReconnectDelayEvent) evt);
+                return;
+            }
+            if (evt instanceof ReconnectFinallySucceedEvent) {
+                onReconnectFinallySucceed((ReconnectFinallySucceedEvent) evt);
+                return;
+            }
+            if (evt instanceof ReconnectFinallyFailedEvent) {
+                onReconnectFinallyFailed((ReconnectFinallyFailedEvent) evt);
+                return;
+            }
+            super.userEventTriggered(ctx, evt);
+        }
+
+        private void onReconnectFinallySucceed(ReconnectFinallySucceedEvent event) {
+            communicator().consoleSuccess("net.reconnect.succeed");
+        }
+
+        private void onReconnectFinallyFailed(ReconnectFinallyFailedEvent event) {
+            communicator().consoleError("net.reconnect.failed");
+        }
+
+        private void onReconnectDelay(ReconnectDelayEvent event) {
+            final long delaySeconds = TimeUnit.MILLISECONDS.toSeconds(event.getDelayMillSeconds());
+            communicator().consoleWarn("net.reconnect.delay", delaySeconds, event.getAttemptCount());
+        }
+    }
+    @Getter(AccessLevel.NONE)
+    private final ReconnectNoticeHandler reconnectNoticeHandler = new ReconnectNoticeHandler();
 
     /** 心跳发送器 */
     @ChannelHandler.Sharable
@@ -84,6 +193,7 @@ public class Client extends BukkitPluginObject<Plugin> {
             packetHandler.sign(BaseProtocol.HEART_BEAT);
         }
     }
+    @Getter(AccessLevel.NONE)
     protected final HeartbeatHandler heartbeatHandler = new HeartbeatHandler();
 
     /** 异常掉线器 */
@@ -105,9 +215,10 @@ public class Client extends BukkitPluginObject<Plugin> {
                 return;
             }
             communicator().consoleWarn("net.state.exception.unknown");
-            communicator().consoleErrorString(ThrowableUtil.toStackTraces(cause));
+            communicator().consoleErrorString(Throwables.toStackTraces(cause));
         }
     }
+    @Getter(AccessLevel.NONE)
     protected final ExceptionHandler exceptionHandler = new ExceptionHandler();
 
     /** 负责服务器身份验证的 Handler */
@@ -116,21 +227,29 @@ public class Client extends BukkitPluginObject<Plugin> {
         protected final Box<Packet> msgBox = Box.empty();
         protected volatile boolean accepted = false;
 
+        protected boolean shouldReconnect = true;
+
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             // 启动验证线程和验证等待线程
             final Future<Object> future = executors.submit(() -> {
-                Thread.sleep(plugin.getConfiguration().getConnection().getResponseDelay());
-                verify(ctx);
+                Thread.sleep(plugin.getConnectionConfiguration().getResponseDelay());
+
+                try {
+                    reconnectStateHandler.disable();
+                    verify(ctx);
+                } finally {
+                    if (shouldReconnect) {
+                        reconnectStateHandler.enable();
+                    }
+                }
+
                 return null;
             });
 
-            logger().debug("channel active, and submit task waiting for verifying");
             executors.submit(() -> {
                 try {
-                    logger().debug("waiting for verifying...");
-                    future.get(plugin.getConfiguration().getConnection().getVerifyTimeout(), TimeUnit.MILLISECONDS);
-                    logger().debug("verify result: accepted = " + accepted);
+                    future.get(plugin.getConnectionConfiguration().getVerifyTimeout(), TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     communicator().consoleInfo("net.verify.error.cancelled");
                 } catch (ExecutionException e) {
@@ -145,7 +264,7 @@ public class Client extends BukkitPluginObject<Plugin> {
                         return;
                     }
 
-                    communicator().consoleError("net.verify.error.exception", ThrowableUtil.toStackTraces(cause));
+                    communicator().consoleError("net.verify.error.exception", Throwables.toStackTraces(cause));
                 } catch (TimeoutException e) {
                     future.cancel(true);
                     communicator().consoleInfo("net.verify.error.timeout");
@@ -153,22 +272,21 @@ public class Client extends BukkitPluginObject<Plugin> {
                     ctx.pipeline().remove(VerifyHandler.this);
                     if (accepted) {
                         ctx.pipeline().addLast(packetHandler);
-                        ctx.pipeline().addLast(heartbeatHandler);
-                        ctx.pipeline().addLast(exceptionHandler);
                     } else {
                         disconnect();
                     }
                 }
             });
+            super.channelActive(ctx);
         }
 
         protected Optional<VerifyResponse> requestVerify(ChannelHandlerContext ctx) throws InterruptedException, TimeoutException {
-            final Configuration.Connection connection = plugin.getConfiguration().getConnection();
+            final ConnectionConfiguration configuration = plugin.getConnectionConfiguration();
 
             // 构造连接请求包
             final String passwordHash;
             try {
-                passwordHash = PasswordHashUtil.createHash(connection.getPassword());
+                passwordHash = PasswordHashUtil.createHash(configuration.getPassword());
             } catch (NoSuchAlgorithmException e) {
                 communicator().consoleError("net.verify.error.algorithm");
                 return Optional.empty();
@@ -180,23 +298,20 @@ public class Client extends BukkitPluginObject<Plugin> {
 
             // 构造请求包并发送
             ctx.writeAndFlush(new RequestPacket<>(XMMCProtocol.REQUEST_VERIFY, verifyRequest, 0));
-            logger().debug("verify request: pwd = " + connection.getPassword() + ", pbkdf2 hash = " + passwordHash);
 
             // 等待回应
-            final VerifyResponse verifyResponse = nextResponse(XMMCProtocol.REQUEST_VERIFY, connection.getResponseTimeout());
-            logger().debug("response for connect request: " + verifyResponse);
+            final VerifyResponse verifyResponse = nextResponse(XMMCProtocol.REQUEST_VERIFY, configuration.getResponseTimeout());
 
             return Optional.of(verifyResponse);
         }
 
         public void verify(ChannelHandlerContext ctx) throws Exception {
-            final Configuration configuration = plugin.getConfiguration();
-            final Configuration.Connection connection = configuration.getConnection();
+            final ConnectionConfiguration configuration = plugin.getConnectionConfiguration();
 
             // 构造验证请求并发送，得到回应
             final Optional<VerifyResponse> optionalVerifyResponse = requestVerify(ctx);
             if (!optionalVerifyResponse.isPresent()) {
-                reconnectHandler.setStopToReconnect(true);
+                reconnectStateHandler.disable();
                 return;
             }
             final VerifyResponse verifyResponse = optionalVerifyResponse.get();
@@ -211,12 +326,17 @@ public class Client extends BukkitPluginObject<Plugin> {
             }
             if (verifyResponse instanceof VerifyResponse.Conflict) {
                 communicator().consoleWarn("net.verify.conflict");
-                reconnectHandler.setStopToReconnect(true);
+                shouldReconnect = false;
+                return;
+            }
+            if (verifyResponse instanceof VerifyResponse.Cancelled) {
+                communicator().consoleWarn("net.verify.cancelled");
+                shouldReconnect = false;
                 return;
             }
             if (verifyResponse instanceof VerifyResponse.Denied) {
                 communicator().consoleWarn("net.verify.denied");
-                reconnectHandler.setStopToReconnect(true);
+                shouldReconnect = false;
                 return;
             }
 
@@ -227,7 +347,7 @@ public class Client extends BukkitPluginObject<Plugin> {
                 final VerifyResponse.Confirm confirm = (VerifyResponse.Confirm) verifyResponse;
                 if (verifyResponse instanceof VerifyResponse.Confirm.Busy) {
                     communicator().consoleWarn("net.verify.confirm.busy");
-                    reconnectHandler.setStopToReconnect(true);
+                    shouldReconnect = false;
                     return;
                 }
                 final VerifyResponse.Confirm.Operated operated = (VerifyResponse.Confirm.Operated) confirm;
@@ -235,7 +355,7 @@ public class Client extends BukkitPluginObject<Plugin> {
                 final String verifyCode = operated.getVerifyCode();
                 final long timeout = operated.getTimeout();
 
-                communicator().consoleInfo("net.verify.confirm.message", TimeUtil.toTimeLength(timeout), verifyCode);
+                communicator().consoleInfo("net.verify.confirm.message", Times.toTimeLength(timeout), verifyCode);
 
                 // 等待确认消息
                 final Packet packet = nextPacket(x -> x instanceof TypePacket
@@ -253,14 +373,14 @@ public class Client extends BukkitPluginObject<Plugin> {
                     final ConfirmRequest.Accepted accepted = (ConfirmRequest.Accepted) confirmRequest;
                     this.accepted = true;
                     communicator().consoleSuccess("net.verify.confirm.accepted", accepted.getName());
-                    configuration.getConnection().setPassword(accepted.getPassword());
+                    configuration.setPassword(accepted.getPassword());
                     configuration.save();
                 }
 
                 // 稍后再回复
                 final boolean finalAccepted = this.accepted;
                 executors.schedule(() -> ctx.writeAndFlush(
-                        new ResponsePacket<>(finalAccepted, confirmRequestPacket.getPacketCode(), 0)), connection.getResponseDelay(), TimeUnit.MILLISECONDS);
+                        new ResponsePacket<>(finalAccepted, confirmRequestPacket.getPacketCode(), 0)), configuration.getResponseDelay(), TimeUnit.MILLISECONDS);
             }
         }
 
@@ -295,32 +415,13 @@ public class Client extends BukkitPluginObject<Plugin> {
         }
     }
 
-    public Client(Plugin plugin) {
+    public Client(XMMCBukkitPlugin plugin) {
         super(plugin);
 
         setupConfiguration();
 
         packetHandler.setDefaultMessageListener(packet -> {
             communicator().consoleDebugString("no type packet: " + packet);
-        });
-
-        // 更新 channel
-        listenerHandler.getAddListeners().add(HandlerListener.repetitive(context -> {
-            Client.this.channel = context.channel();
-        }));
-
-        reconnectHandler.setOnReconnectSuccessfully(() -> {
-            consoleSender().sendMessage(language().formatSuccessNode("net.reconnect.succeed"));
-        });
-        reconnectHandler.setOnOutOfTotalReconnectBound(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("net.reconnect.outOfBound.total", reconnectHandler.getMaxTotalReconnectFailCount()));
-        });
-        reconnectHandler.setOnOutOfRecentReconnectBound(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("net.reconnect.outOfBound.recent", reconnectHandler.getMaxRecentReconnectFailCount()));
-        });
-        reconnectHandler.setOnReconnectException(throwable -> {});
-        reconnectHandler.setOnBeforeNextReconnectSleep(() -> {
-            consoleSender().sendMessage(language().formatWarnNode("net.reconnect.beforeSleep", TimeUnit.MILLISECONDS.toSeconds(reconnectHandler.getNextReconnectDelay()), reconnectHandler.getRecentReconnectFailCount() + 1));
         });
 
         bootstrap.channel(NioSocketChannel.class)
@@ -330,90 +431,61 @@ public class Client extends BukkitPluginObject<Plugin> {
                         Client.this.channel = channel;
                         final ChannelPipeline pipeline = channel.pipeline();
 
-                        final Logger logger = communicator().toLogger();
-                        final Configuration.Connection connection = plugin.getConfiguration().getConnection();
-                        pipeline.addLast(new IdleStateHandler(0, connection.getIdlePeriod(), 0, TimeUnit.MILLISECONDS));
-
+                        // 长度域解包器
                         pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
                         pipeline.addLast(new LengthFieldPrepender(4));
 
+                        // 编码器和解码器
                         pipeline.addLast(new StringDecoder(StandardCharsets.UTF_8));
                         pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
 
-                        pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.getInstance()));
-                        pipeline.addLast(new DebugDuplexHandler("packet", logger));
+                        // Json 反序列化器
+                        pipeline.addLast(new JsonPacketCodec(XMMCProtocol.getInstance()));
+                        pipeline.addLast(new DebugDuplexHandler("packet", communicator().toLogger()));
 
-                        pipeline.addLast(listenerHandler);
+                        // 心跳检测器
+                        final ConnectionConfiguration connection = plugin.getConnectionConfiguration();
+                        pipeline.addLast(new IdleStateHandler(0, connection.getHeartbeatTimeout(), 0, TimeUnit.MILLISECONDS));
+                        pipeline.addLast(heartbeatHandler);
 
+                        // 验证器
                         pipeline.addLast(new VerifyHandler());
-                        pipeline.addLast(reconnectHandler);
+
+                        // 其他逻辑
+                        pipeline.addLast(reconnectStateHandler);
+                        pipeline.addLast(reconnectNoticeHandler);
+                        pipeline.addLast(exceptionHandler);
+                        pipeline.addLast(connectHandler);
                     }
                 });
     }
 
     public void setupConfiguration() {
-        final Configuration.Connection connection = plugin.getConfiguration().getConnection();
+        final ConnectionConfiguration connection = plugin.getConnectionConfiguration();
 
         bootstrap.remoteAddress(connection.getHost(), connection.getPort());
 
         packetHandler.setResponseDelay(connection.getResponseDelay());
         packetHandler.setResponseTimeout(connection.getResponseTimeout());
 
-        reconnectHandler.setMaxRecentReconnectFailCount(connection.getMaxRecentReconnectFailCount());
-        reconnectHandler.setMaxTotalReconnectFailCount(connection.getMaxTotalReconnectFailCount());
-        reconnectHandler.setBaseReconnectDelay(connection.getBaseReconnectDelay());
-        reconnectHandler.setDeltaReconnectDelay(connection.getDeltaReconnectDelay());
+        reconnectStateHandler.setBaseReconnectDelay(connection.getBaseReconnectDelay());
+        reconnectStateHandler.setDeltaReconnectDelay(connection.getDeltaReconnectDelay());
+        reconnectStateHandler.setMaxAttempts(connection.getMaxAttemptCount());
 
         if (Objects.isNull(executors)) {
             executors = new NioEventLoopGroup(connection.getThreadCount());
             bootstrap.group(executors);
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                if (Objects.isNull(executors)) {
-                    return;
-                }
-                if (executors.isTerminated()) {
-                    return;
-                }
-                executors.shutdownGracefully();
-            }));
         }
     }
 
-    @Getter(AccessLevel.NONE)
-    private volatile ChannelFuture recentConnectFuture;
-
     public Optional<ChannelFuture> connect() {
-        if (isConnected()) {
-            return Optional.empty();
-        }
-
-        if (Objects.nonNull(recentConnectFuture)) {
-            return Optional.of(recentConnectFuture);
-        }
-
-        final ChannelFuture reconnectFuture = reconnectHandler.getReconnectFuture();
-        if (Objects.nonNull(reconnectFuture)) {
-            return Optional.of(reconnectFuture);
-        }
-
-        reconnectHandler.setRecentReconnectFailCount(0);
-        reconnectHandler.setStopToReconnect(false);
-        reconnectHandler.stopReconnecting();
-
-        setupConfiguration();
-
-        final ChannelFuture connectFuture = bootstrap.connect();
-        recentConnectFuture = connectFuture;
-        this.channel = connectFuture.channel();
-
-        connectFuture.addListener(x -> {
-            recentConnectFuture = null;
-        });
-        return Optional.of(connectFuture);
+        reconnectStateHandler.enable();
+        reconnectStateHandler.setAttemptCount(0);
+        return connectHandler.connect();
     }
 
     public boolean isConnected() {
-        return Objects.nonNull(channel) && channel.isActive();
+        return connectHandler.connected;
     }
 
     public Optional<ChannelFuture> disconnectManually() {
@@ -421,9 +493,7 @@ public class Client extends BukkitPluginObject<Plugin> {
             return Optional.empty();
         }
 
-        reconnectHandler.stopReconnecting();
-        reconnectHandler.setStopToReconnect(true);
-
+        reconnectStateHandler.disable(true);
         return Optional.of(channel.disconnect());
     }
 

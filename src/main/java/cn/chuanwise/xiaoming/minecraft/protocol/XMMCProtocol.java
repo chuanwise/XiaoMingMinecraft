@@ -1,9 +1,11 @@
 package cn.chuanwise.xiaoming.minecraft.protocol;
 
 import cn.chuanwise.mclib.net.protocol.NetLibProtocol;
+import cn.chuanwise.mclib.net.protocol.SendSameMessageInform;
+import cn.chuanwise.mclib.net.protocol.SendTitleRequest;
 import cn.chuanwise.net.Protocol;
-import cn.chuanwise.net.netty.BaseProtocol;
-import cn.chuanwise.net.netty.ProtocolException;
+import cn.chuanwise.net.netty.protocol.BaseProtocol;
+import cn.chuanwise.net.netty.exception.ProtocolException;
 import cn.chuanwise.net.packet.InformPacketType;
 import cn.chuanwise.net.packet.ObtainPacketType;
 import cn.chuanwise.net.packet.RequestPacketType;
@@ -11,10 +13,10 @@ import cn.chuanwise.net.packet.RequestPacketType;
 /** XMMC 通讯协议 */
 public class XMMCProtocol extends Protocol {
     /** 通讯协议版本 */
-    public static final String VERSION = "1.1-SNAPSHORT";
+    public static final String VERSION = "1.1-SNAPSHOT";
 
     public static final RequestPacketType<Long, Long> REQUEST_CONFIRM_ACTIVE = new RequestPacketType<>(Long.class, Long.class);
-    public static final InformPacketType<PacketInform> INFORM_PACKET = new InformPacketType<>(PacketInform.class);
+    public static final InformPacketType<String> INFORM_MESSAGE = new InformPacketType<>(String.class);
 
     /**
      * 如果回应 {@link VerifyResponse.Confirm}，则需要用户在 qq 上确认特征信息。
@@ -35,8 +37,16 @@ public class XMMCProtocol extends Protocol {
     public static final RequestPacketType<String, Boolean> REQUEST_PLAYER_UNBIND = new RequestPacketType<>(String.class, Boolean.class);
     public static final InformPacketType<PlayerBindResultInform> INFORM_PLAYER_BIND_RESULT = new InformPacketType<>(PlayerBindResultInform.class);
 
+    public static final RequestPacketType<String, PlayerBindInfo> REQUEST_PLAYER_BIND_INFO = new RequestPacketType<>(String.class, PlayerBindInfo.class);
+    public static final RequestPacketType<String, PlayerVerifyCodeInfo> REQUEST_PLAYER_VERIFY_CODE = new RequestPacketType<>(String.class, PlayerVerifyCodeInfo.class);
+
     /** 申请执行指令 */
     public static final RequestPacketType<CommandRequest, CommandRequestResponse> REQUEST_COMMAND_REQUEST = new RequestPacketType<>(CommandRequest.class, CommandRequestResponse.class);
+
+    public static final InformPacketType<Integer> INFORM_TPS = new InformPacketType<>(Integer.class);
+
+    public static final InformPacketType<SendTitleRequest> INFORM_ALL_TITLE = new InformPacketType<>(SendTitleRequest.class);
+    public static final InformPacketType<SendSameMessageInform> INFORM_WIDE_MESSAGE = new InformPacketType<>(SendSameMessageInform.class);
 
     public static void checkProtocol(boolean legal, String message) {
         if (legal) {
@@ -57,7 +67,6 @@ public class XMMCProtocol extends Protocol {
         return INSTANCE;
     }
     private XMMCProtocol() {
-        registerStaticPacketTypes(XMMCProtocol.class);
         registerStaticPacketTypes(BaseProtocol.class);
         registerStaticPacketTypes(NetLibProtocol.class);
     }

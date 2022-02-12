@@ -15,7 +15,7 @@ public class ClientTest {
 
     @BeforeAll
     void init() {
-        client = new Client(new Plugin());
+        client = new Client(new XMMCBukkitPlugin());
     }
 
     @Test

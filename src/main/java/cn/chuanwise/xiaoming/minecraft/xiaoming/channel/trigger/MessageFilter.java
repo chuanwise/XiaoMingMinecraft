@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger;
 
 import cn.chuanwise.pattern.ParameterPattern;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -222,7 +222,7 @@ public abstract class MessageFilter {
 
         @Override
         public MessageFilterReceipt filter0(String message) {
-            final int maxIterateTime = Plugin.getInstance().getXiaomingBot().getConfiguration().getMaxIterateTime();
+            final int maxIterateTime = XMMCXiaoMingPlugin.getInstance().getXiaoMingBot().getConfiguration().getMaxIterateTime();
             final Optional<Map<String, String>> optionalEnvironment = getPattern().parse(message);
 
             if (!optionalEnvironment.isPresent()) {
@@ -237,7 +237,7 @@ public abstract class MessageFilter {
     public static class All extends MessageFilter {
         @Override
         public String getDescription() {
-            return "无条件";
+            return "所有消息";
         }
 
         @Override

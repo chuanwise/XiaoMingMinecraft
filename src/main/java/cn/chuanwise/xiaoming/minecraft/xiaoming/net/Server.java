@@ -2,23 +2,27 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
 import cn.chuanwise.api.Flushable;
 import cn.chuanwise.api.Logger;
-import cn.chuanwise.net.netty.*;
-import cn.chuanwise.net.netty.packet.JsonPacketCodeC;
+import cn.chuanwise.net.netty.exception.ProtocolException;
+import cn.chuanwise.net.netty.handler.DebugDuplexHandler;
+import cn.chuanwise.net.netty.handler.HandlerListener;
+import cn.chuanwise.net.netty.handler.ListenerHandler;
+import cn.chuanwise.net.netty.packet.JsonPacketCodec;
 import cn.chuanwise.net.packet.*;
 import cn.chuanwise.toolkit.box.Box;
 import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.ConditionUtil;
+import cn.chuanwise.util.CollectionUtil;
+import cn.chuanwise.util.Preconditions;
 import cn.chuanwise.util.ObjectUtil;
-import cn.chuanwise.util.StringUtil;
-import cn.chuanwise.util.ThrowableUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
 import cn.chuanwise.xiaoming.minecraft.util.PasswordHashUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
 import cn.chuanwise.xiaoming.minecraft.protocol.XMMCProtocol;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.SessionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.ServerConflictEvent;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.event.ServerConnectedEvent;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.interactors.VerifyInteractors;
 import cn.chuanwise.xiaoming.object.PluginObjectImpl;
 import io.netty.bootstrap.ServerBootstrap;
@@ -30,12 +34,10 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.Future;
 import lombok.Getter;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -46,10 +48,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Getter
 public class Server
-        extends PluginObjectImpl<Plugin>
+        extends PluginObjectImpl<XMMCXiaoMingPlugin>
         implements Flushable {
     protected final ServerBootstrap serverBootstrap = new ServerBootstrap();
 
@@ -64,6 +67,16 @@ public class Server
         return Collections.unmodifiableList(onlineClients);
     }
 
+    public Optional<OnlineClient> getOnlineClient(String name) {
+        return CollectionUtil.findFirst(onlineClients, x -> Objects.equals(x.getServerInfo().getName(), name)).toOptional();
+    }
+
+    public List<OnlineClient> searchOnlineClientByTag(String serverTag) {
+        return Collections.unmodifiableList(onlineClients.stream()
+                .filter(x -> x.serverInfo.hasTag(serverTag))
+                .collect(Collectors.toList()));
+    }
+
     @ChannelHandler.Sharable
     private class VerifyHandler extends SimpleChannelInboundHandler<Packet> {
         protected final Box<Packet> msgBox = Box.empty();
@@ -71,8 +84,8 @@ public class Server
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
-            final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
+            final SessionConfiguration sessionConfiguration = plugin.getSessionConfiguration();
+            final SessionConfiguration.Connection connection = sessionConfiguration.getConnection();
 
             final Future<Object> future = executors.submit(() -> {
                 verify(ctx);
@@ -108,12 +121,14 @@ public class Server
                     ctx.pipeline().remove(VerifyHandler.this);
                 }
             });
+
+            super.channelActive(ctx);
         }
 
         protected void verify(ChannelHandlerContext ctx) throws Exception {
             // 服务器端会发送 XMMCProtocol.REQUEST_VERIFY 类型的包
-            final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
-            final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
+            final SessionConfiguration sessionConfiguration = plugin.getSessionConfiguration();
+            final SessionConfiguration.Connection connection = sessionConfiguration.getConnection();
 
             final Packet packet = nextPacket(x -> x instanceof RequestPacket
                     && Objects.equals(((RequestPacket<?, ?>) x).getPacketType(), XMMCProtocol.REQUEST_VERIFY), connection.getResponseTimeout());
@@ -127,7 +142,7 @@ public class Server
 
             // 寻找使用此密码的服务器
             ServerInfo serverInfo = null;
-            for (ServerInfo info : pluginConfiguration.getServers().values()) {
+            for (ServerInfo info : sessionConfiguration.getServers().values()) {
                 if (PasswordHashUtil.validatePassword(info.getPassword(), passwordHash)) {
                     serverInfo = info;
                     break;
@@ -146,17 +161,29 @@ public class Server
                 }
 
                 if (Objects.nonNull(onlineClient)) {
-                    final VerifyResponse.Conflict verifyResponse = new VerifyResponse.Conflict();
-                    ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
+                    ctx.writeAndFlush(new ResponsePacket<>(VerifyResponse.Conflict.getInstance(), 0, 0));
+
+                    // call event
+                    xiaoMingBot.getEventManager().callEventAsync(new ServerConflictEvent(onlineClient));
 
                     plugin.getLogger().info("有服务器尝试使用 " + serverInfo.getName() + " 的身份连接到小明，但该服务器已经在线了");
                 } else {
-                    accepted = true;
-                    final VerifyResponse.Accepted verifyResponse = new VerifyResponse.Accepted(serverInfo.getName());
-                    ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
-                    onlineClients.add(new OnlineClient(Server.this, ctx.channel(), serverInfo));
+                    // call event
+                    onlineClient = new OnlineClient(Server.this, ctx.channel(), serverInfo);
+                    final ServerConnectedEvent event = new ServerConnectedEvent(onlineClient);
+                    xiaoMingBot.getEventManager().callEvent(event);
 
-                    plugin.getLogger().info("服务器「" + serverInfo.getName() + "」连接到小明");
+                    if (event.isCancelled()) {
+                        ctx.writeAndFlush(new ResponsePacket<>(VerifyResponse.Cancelled.getInstance(), 0, 0));
+                        plugin.getLogger().warn("服务器「" + serverInfo.getName() + "」连接到小明，但连接事件被取消");
+                    } else {
+                        accepted = true;
+                        final VerifyResponse.Accepted verifyResponse = new VerifyResponse.Accepted(serverInfo.getName());
+                        ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
+                        onlineClients.add(onlineClient);
+
+                        plugin.getLogger().info("服务器「" + serverInfo.getName() + "」连接到小明");
+                    }
                 }
                 return;
             }
@@ -166,8 +193,7 @@ public class Server
             // 检查目前是否允许新服务器接入
             // 如果不允许就返回错误
             if (!verifyInteractors.isAllowStrangeServerConnect()) {
-                final VerifyResponse.Denied verifyResponse = new VerifyResponse.Denied();
-                ctx.writeAndFlush(new ResponsePacket<>(verifyResponse, 0, 0));
+                ctx.writeAndFlush(new ResponsePacket<>(VerifyResponse.Denied.getInstance(), 0, 0));
 
                 plugin.getLogger().info("陌生服务器连接到小明，但因为尚未开启迎新模式，故被拒绝连接");
                 return;
@@ -195,7 +221,7 @@ public class Server
             try {
                 if (ObjectUtil.wait(condition, verifyTimeout)) {
                     // 如果等到了结果
-                    ConditionUtil.checkState(meetingContext.isHandled(), "internal error");
+                    Preconditions.state(meetingContext.isHandled(), "internal error");
                     accepted = meetingContext.isAccepted();
                     plugin.getLogger().info("迎新人员" + (accepted ? "批准" : "拒绝") + "了验证码为 " + verifyCode + " 的服务器的连接");
 
@@ -205,14 +231,14 @@ public class Server
                     }
                 } else {
                     plugin.getLogger().info("迎新超时，已拒绝服务器连接");
-                    meetingContext.deny(xiaomingBot.getCode());
+                    meetingContext.deny(xiaoMingBot.getCode());
                 }
             } catch (InterruptedException exception) {
                 plugin.getLogger().error("等待迎新结果被打断");
-                meetingContext.deny(xiaomingBot.getCode());
+                meetingContext.deny(xiaoMingBot.getCode());
             } catch (Exception exception) {
                 plugin.getLogger().error("等待迎新结果时出现异常", exception);
-                meetingContext.deny(xiaomingBot.getCode());
+                meetingContext.deny(xiaoMingBot.getCode());
             } finally {
                 if (accepted) {
                     final ConfirmRequest.Accepted accepted = new ConfirmRequest.Accepted(serverInfo.getName(), serverInfo.getPassword());
@@ -254,7 +280,7 @@ public class Server
         }
     }
 
-    public Server(Plugin plugin) {
+    public Server(XMMCXiaoMingPlugin plugin) {
         setPlugin(plugin);
 
         // 当 handler remove，删除 online client
@@ -271,7 +297,7 @@ public class Server
                         final ChannelPipeline pipeline = channel.pipeline();
 
                         final Logger logger = plugin.getLog();
-                        final PluginConfiguration.Connection connection = plugin.getPluginConfiguration().getConnection();
+                        final SessionConfiguration.Connection connection = plugin.getSessionConfiguration().getConnection();
                         pipeline.addLast(new IdleStateHandler(connection.getIdleTimeout(), 0, 0, TimeUnit.MILLISECONDS));
 
                         pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
@@ -280,7 +306,7 @@ public class Server
                         pipeline.addLast(new StringDecoder(StandardCharsets.UTF_8));
                         pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
 
-                        pipeline.addLast(new JsonPacketCodeC(XMMCProtocol.getInstance()));
+                        pipeline.addLast(new JsonPacketCodec(XMMCProtocol.getInstance()));
                         pipeline.addLast(new DebugDuplexHandler("packet", logger));
                         pipeline.addLast(listenerHandler);
 
@@ -290,8 +316,8 @@ public class Server
     }
 
     public void setupConfiguration() {
-        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
-        final PluginConfiguration.Connection connection = pluginConfiguration.getConnection();
+        final SessionConfiguration sessionConfiguration = plugin.getSessionConfiguration();
+        final SessionConfiguration.Connection connection = sessionConfiguration.getConnection();
 
         if (Objects.isNull(executors)) {
             executors = new NioEventLoopGroup(connection.getThreadCount());

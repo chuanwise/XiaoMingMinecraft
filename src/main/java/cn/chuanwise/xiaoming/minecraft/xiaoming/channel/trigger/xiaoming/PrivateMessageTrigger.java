@@ -1,26 +1,21 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming;
 
-import cn.chuanwise.util.StringUtil;
-import cn.chuanwise.xiaoming.contact.contact.GroupContact;
-import cn.chuanwise.xiaoming.contact.contact.PrivateContact;
 import cn.chuanwise.xiaoming.event.MessageEvent;
-import cn.chuanwise.xiaoming.group.GroupInformation;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
-import cn.chuanwise.xiaoming.user.GroupXiaomingUser;
-import cn.chuanwise.xiaoming.user.PrivateXiaomingUser;
-import cn.chuanwise.xiaoming.user.XiaomingUser;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
+import cn.chuanwise.xiaoming.user.PrivateXiaoMingUser;
 import lombok.Data;
 
-import java.util.*;
+import java.util.Collections;
 
 @Data
 @SuppressWarnings("all")
-public class PrivateMessageTrigger extends QQMessageTrigger {
+public class PrivateMessageTrigger extends XiaoMingMessageTrigger {
     @Override
-    public String getDescription() {
-        return "私聊 #" + accountTag + " 的消息触发器" +
-                "（消息过滤器：" + messageFilter.getDescription() + "，" +
-                "绑定要求：" + (mustBind ? "必须" : "不必") + "，" +
-                "权限：" + (StringUtil.isEmpty(permission) ? "（无）" : permission) + "）";
+    protected TriggerHandleReceipt handle2(MessageEvent event) {
+        if (event.getUser() instanceof PrivateXiaoMingUser) {
+            return new TriggerHandleReceipt.Handled(Collections.emptyMap());
+        } else {
+            return TriggerHandleReceipt.Unhandled.getInstance();
+        }
     }
 }

@@ -7,11 +7,15 @@ import cn.chuanwise.mclib.bukkit.ask.AskerManager;
 import cn.chuanwise.mclib.bukkit.util.CommandUtil;
 import cn.chuanwise.mclib.storage.Language;
 import cn.chuanwise.storage.file.StoredFile;
-import cn.chuanwise.util.ConditionUtil;
-import cn.chuanwise.util.StreamUtil;
-import cn.chuanwise.util.ThrowableUtil;
+import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.util.Streams;
+import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.BaseConfiguration;
+import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
+import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.WhitelistConfiguration;
+import cn.chuanwise.xiaoming.minecraft.bukkit.listeners.WhitelistListener;
 import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.Getter;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.command.Command;
@@ -23,14 +27,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Getter
-public class Plugin extends BukkitPlugin {
-    protected static Plugin INSTANCE;
-    public static Plugin getInstance() {
-        ConditionUtil.checkState(Objects.nonNull(INSTANCE), "插件尚未加载！");
+public class XMMCBukkitPlugin extends BukkitPlugin {
+    protected static XMMCBukkitPlugin INSTANCE;
+    public static XMMCBukkitPlugin getInstance() {
+        Preconditions.stateNonNull(Objects.nonNull(INSTANCE), "插件尚未加载！");
         return INSTANCE;
     }
 
-    protected Configuration configuration;
+    protected BaseConfiguration baseConfiguration;
+    protected ConnectionConfiguration connectionConfiguration;
+    protected WhitelistConfiguration whitelistConfiguration;
+
     protected Client client;
 
     protected PluginCommands commands;
@@ -41,6 +48,7 @@ public class Plugin extends BukkitPlugin {
         INSTANCE = this;
     }
 
+    @SuppressWarnings("all")
     public void reload() throws IOException {
         final File dataFolder = createDataFolder();
 
@@ -48,15 +56,20 @@ public class Plugin extends BukkitPlugin {
         final File languageFile = new File(dataFolder, "language.yml");
         setupLanguage(languageFile, () -> StoredFile.loadYamlResource("language.yml", StandardCharsets.UTF_8, Language.class));
 
-        configuration = setupConfiguration(Configuration.class, new File(getDataFolder(), "configuration.yml"), Configuration::new);
-        communicator.setDebug(configuration.isDebug());
+        final File configurationDirectory = new File(dataFolder, "configurations");
+        configurationDirectory.mkdirs();
+        baseConfiguration = setupConfiguration(BaseConfiguration.class, new File(configurationDirectory, "base.yml"), BaseConfiguration::new);
+        connectionConfiguration = setupConfiguration(ConnectionConfiguration.class, new File(configurationDirectory, "connection.yml"), ConnectionConfiguration::new);
+        whitelistConfiguration = setupConfiguration(WhitelistConfiguration.class, new File(configurationDirectory, "whitelist.yml"), WhitelistConfiguration::new);
+
+        communicator.setDebug(baseConfiguration.isDebug());
     }
 
     @Override
     protected void onEnable0() throws Exception {
         // 读取 enable 消息
         try {
-            final String enableMessage = StreamUtil.read(getClassLoader().getResourceAsStream("message/enable.txt"), StandardCharsets.UTF_8);
+            final String enableMessage = Streams.read(getClassLoader().getResourceAsStream("message/enable.txt"), StandardCharsets.UTF_8);
             getServer().getConsoleSender().sendMessage(enableMessage);
         } catch (IOException exception) {
             communicator.consoleInfoString("欢迎使用小明 b（￣▽￣）d");
@@ -69,9 +82,11 @@ public class Plugin extends BukkitPlugin {
 
         client = new Client(this);
         registerListeners(client.getLocalContact());
+        registerListeners(client.getClientContact());
+        registerListeners(new WhitelistListener());
 
         // 尝试自动连接
-        if (configuration.connection.autoConnect) {
+        if (connectionConfiguration.isAutoConnect()) {
             scheduler.runAsyncTask(() -> {
                 client.connect().ifPresent(x -> x.addListener(y -> {
                     if (y.isSuccess()) {
@@ -151,9 +166,14 @@ public class Plugin extends BukkitPlugin {
             communicator.consoleInfo("net.disconnect.succeed");
         }
 
+        final NioEventLoopGroup executors = client.getExecutors();
+        if (executors != null) {
+            executors.shutdownGracefully();
+        }
+
         // 读取 enable 消息
         try {
-            final String enableMessage = StreamUtil.read(getClassLoader().getResourceAsStream("message/disable.txt"), StandardCharsets.UTF_8);
+            final String enableMessage = Streams.read(getClassLoader().getResourceAsStream("message/disable.txt"), StandardCharsets.UTF_8);
             getServer().getConsoleSender().sendMessage(enableMessage);
         } catch (IOException exception) {
             communicator.consoleInfoString("期待我们的下一次重逢！");

@@ -1,4 +1,4 @@
 name: XiaoMingMinecraft
-main: cn.chuanwise.xiaoming.minecraft.bukkit.Plugin
-version: 4.3.6-SNAPSHOT
+main: cn.chuanwise.xiaoming.minecraft.bukkit.XMMCBukkitPlugin
+version: 5.0-SNAPSHOT
 authors: [Chuanwise, ThymeChen]

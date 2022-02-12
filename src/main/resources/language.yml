@@ -44,12 +44,12 @@ messages:
         cancelled: '操作被取消'
         algorithm: '本平台上缺少加密所需的 PBKDF2 算法，无法构造连接请求'
         pbkdf2: '加密服务器凭据时出现错误'
+      cancelled: '连接被取消'
     reconnect:
-      beforeSleep: '将在 {.0} 秒后进行第 {.1} 次重连...'
+      delay: '将在 {.0} 秒后进行第 {.1} 次重连...'
       timeout: '重连超时'
-      outOfBound:
-        total: '已达到最大重连次数 {.0} ，将不再尝试重连'
-        recent: '已达到本次最大重连次数 {.0} ，本次将不再尝试重连'
+      outOfBound: '已达到最大重连次数 {.0} ，将不再尝试重连'
+      cancelled: '重连操作被取消'
       succeed: '成功重连'
       failed: '未成功重连'
     disconnect:

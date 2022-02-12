@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
 import cn.chuanwise.util.StringUtil;
-import cn.chuanwise.util.TimeUtil;
+import cn.chuanwise.util.Times;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.contact.message.Message;
@@ -9,13 +9,14 @@ import cn.chuanwise.xiaoming.exception.InteractExitedException;
 import cn.chuanwise.xiaoming.exception.InteractInterrtuptedException;
 import cn.chuanwise.xiaoming.exception.InteractTimeoutException;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PluginConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.BaseConfiguration;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.SessionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.StringGenerator;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
-import cn.chuanwise.xiaoming.user.XiaomingUser;
+import cn.chuanwise.xiaoming.user.XiaoMingUser;
 import lombok.Getter;
 
 import java.util.Objects;
@@ -23,9 +24,9 @@ import java.util.Optional;
 
 @Getter
 @SuppressWarnings("all")
-public class VerifyInteractors extends SimpleInteractors<Plugin> {
+public class VerifyInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
     /** 当前正在等待新连接接入的用户 */
-    protected volatile XiaomingUser strangeServerWaiter = null;
+    protected volatile XiaoMingUser strangeServerWaiter = null;
 
     /** 新连接上下文 */
     @Getter
@@ -89,7 +90,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.MEET + Words.NEW + Words.SERVER)
     @Filter(Words.ALLOW + Words.NEW + Words.SERVER)
     @Required("xmmc.admin.meeting.enable")
-    void meeting(XiaomingUser user) {
+    void meeting(XiaoMingUser user) {
         final Server server = plugin.getServer();
         if (!server.isBound()) {
             user.sendError("服务器还没有启动，请先使用「启动服务器」启动吧");
@@ -98,7 +99,8 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
 
         if (Objects.isNull(strangeServerWaiter)) {
             strangeServerWaiter = user;
-            user.sendMessage("成功在当前会话下允许新服务器接入");
+            user.sendMessage("成功在当前会话下允许新服务器接入。\n" +
+                    "请在你的 Minecraft 服务器上执行 /xm connect 连接小明");
             meetingContext = null;
         } else {
             if (strangeServerWaiter.getCode() == user.getCode()) {
@@ -115,7 +117,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
 
     @Filter(Words.CANCEL + Words.MEET + Words.NEW + Words.SERVER)
     @Required("xmmc.admin.meeting.cancel")
-    void cancelWaiting(XiaomingUser user) {
+    void cancelWaiting(XiaoMingUser user) {
         if (Objects.isNull(strangeServerWaiter)) {
             user.sendError("目前并没有任何人在迎接新服务器接入哦");
             return;
@@ -147,18 +149,19 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
             return Optional.empty();
         }
 
-        final PluginConfiguration pluginConfiguration = plugin.getPluginConfiguration();
-        final StringGenerator verifyCodeGenerator = pluginConfiguration.getGenerator().getVerifyCode();
+        final SessionConfiguration sessionConfiguration = plugin.getSessionConfiguration();
+        final BaseConfiguration baseConfiguration = plugin.getBaseConfiguration();
+        final StringGenerator verifyCodeGenerator = baseConfiguration.getGenerator().getVerifyCode();
 
         final String verifyCode = StringUtil.randomString(verifyCodeGenerator.getCharacters(), verifyCodeGenerator.getLength());
         meetingContext = new MeetingContext(verifyCode);
 
         // 启动询问线程
-        xiaomingBot.getScheduler().run(() -> {
+        xiaoMingBot.getScheduler().run(() -> {
             // 通知有人连接了
-            final XiaomingUser user = this.strangeServerWaiter;
-            final long timeout = pluginConfiguration.getConnection().getVerifyTimeout();
-            final String timeoutLength = TimeUtil.toTimeLength(timeout);
+            final XiaoMingUser user = this.strangeServerWaiter;
+            final long timeout = sessionConfiguration.getConnection().getVerifyTimeout();
+            final String timeoutLength = Times.toTimeLength(timeout);
 
             user.sendMessage("有陌生服务器接入。\n" +
                     "如果是你的服务器，请在" + timeoutLength + "内告诉我服务器【后台】显示的连接验证码，\n" +
@@ -171,7 +174,7 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
                     String name = null;
                     while (true) {
                         name = user.nextMessageOrExit().serialize();
-                        if (Objects.nonNull(pluginConfiguration.getServers().get(name))) {
+                        if (Objects.nonNull(sessionConfiguration.getServers().get(name))) {
                             user.sendError("已经有叫这个名字的服务器了，换个名字再输入一次吧！");
                         } else {
                             break;
@@ -181,26 +184,26 @@ public class VerifyInteractors extends SimpleInteractors<Plugin> {
                     final ServerInfo serverInfo = new ServerInfo();
                     serverInfo.setRegisterTimeMillis(System.currentTimeMillis());
                     serverInfo.setName(name);
-                    pluginConfiguration.getServers().put(name, serverInfo);
+                    sessionConfiguration.getServers().put(name, serverInfo);
 
                     // 生成随机密码
-                    final StringGenerator passwordGenerator = pluginConfiguration.getGenerator().getPassword();
+                    final StringGenerator passwordGenerator = baseConfiguration.getGenerator().getPassword();
                     final String password = StringUtil.randomString(passwordGenerator.getCharacters(), passwordGenerator.getLength());
                     serverInfo.setPassword(password);
 
                     meetingContext.accept(user.getCode(), serverInfo);
                     user.sendMessage("成功批准该服务器连接，并退出迎接新服务器的模式");
-                    pluginConfiguration.readyToSave();
+                    sessionConfiguration.readyToSave();
                 } else {
                     user.sendError("已拒绝该服务器连接");
                     meetingContext.deny(user.getCode());
                 }
             } catch (InteractExitedException | InteractInterrtuptedException exception) {
                 user.sendError("操作被取消");
-                meetingContext.deny(xiaomingBot.getCode());
+                meetingContext.deny(xiaoMingBot.getCode());
             } catch (InteractTimeoutException exception) {
                 user.sendError("你没有及时回复，小明已拒绝该服务器连接");
-                meetingContext.deny(xiaomingBot.getCode());
+                meetingContext.deny(xiaoMingBot.getCode());
             } finally {
                 strangeServerWaiter = null;
                 meetingContext = null;

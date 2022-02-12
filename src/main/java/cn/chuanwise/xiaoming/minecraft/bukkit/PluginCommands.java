@@ -4,6 +4,8 @@ import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
 import cn.chuanwise.mclib.bukkit.OnCommand;
 import cn.chuanwise.mclib.bukkit.Parameter;
 import cn.chuanwise.util.*;
+import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.BaseConfiguration;
+import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
 import cn.chuanwise.xiaoming.minecraft.bukkit.net.XMMCClientContact;
 import cn.chuanwise.xiaoming.minecraft.protocol.PlayerBindResponse;
@@ -17,8 +19,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
-public class PluginCommands extends BukkitPluginObject<Plugin> {
-    public PluginCommands(Plugin plugin) {
+public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
+    public PluginCommands(XMMCBukkitPlugin plugin) {
         super(plugin);
     }
 
@@ -56,11 +58,11 @@ public class PluginCommands extends BukkitPluginObject<Plugin> {
 
     @OnCommand(value = "debug", permission = "xmmc.admin.debug")
     void debug(CommandSender sender) throws IOException {
-        final Configuration configuration = plugin.getConfiguration();
-        final boolean setTo = !configuration.isDebug();
-        configuration.setDebug(setTo);
+        final BaseConfiguration baseConfiguration = plugin.getBaseConfiguration();
+        final boolean setTo = !baseConfiguration.isDebug();
+        baseConfiguration.setDebug(setTo);
         communicator().setDebug(setTo);
-        configuration.save();
+        baseConfiguration.save();
 
         if (setTo) {
             communicator().info(sender, "debug.enabled");
@@ -95,7 +97,7 @@ public class PluginCommands extends BukkitPluginObject<Plugin> {
         if (response instanceof PlayerBindResponse.Wait) {
             final PlayerBindResponse.Wait wait = (PlayerBindResponse.Wait) response;
             final long timeout = wait.getTimeout();
-            final String timeoutLength = TimeUtil.toTimeLength(timeout);
+            final String timeoutLength = Times.toTimeLength(timeout);
             communicator().info(sender, "playerInfo.bind.wait", timeoutLength);
 
             // 这里也开一个新线程等待一下
@@ -177,34 +179,21 @@ public class PluginCommands extends BukkitPluginObject<Plugin> {
             plugin.reload();
             communicator().info(sender, "reload.succeed");
         } catch (IOException exception) {
-            communicator().info(sender, "reload.failed", ThrowableUtil.toStackTraces(exception));
+            communicator().info(sender, "reload.failed", Throwables.toStackTraces(exception));
         }
-    }
-
-    @OnCommand(value = "test heartbeat", permission = "xmmc.admin.test")
-    void testHeartbeat(CommandSender sender) {
-        final Client client = plugin.getClient();
-        if (!client.isConnected()) {
-            communicator().warn(sender, "net.state.disconnected");
-            return;
-        }
-        final XMMCClientContact clientContact = client.getClientContact();
-
-        client.getHeartbeatHandler().sendHeartbeat();
-        communicator().success(sender, "net.heartbeat");
     }
 
     @OnCommand(value = "config host @host", permission = "xmmc.admin.config.host")
     void configHost(CommandSender sender, @Parameter("host") String host) throws IOException {
-        final Configuration configuration = plugin.getConfiguration();
-        configuration.getConnection().setHost(host);
+        final ConnectionConfiguration configuration = plugin.getConnectionConfiguration();
+        configuration.setHost(host);
         configuration.save();
         communicator().info(sender, "configuration.host.configured", host);
     }
 
     @OnCommand(value = "config port @port", permission = "xmmc.admin.config.port")
     void configPort(CommandSender sender, @Parameter("port") String portString) throws IOException {
-        final Configuration configuration = plugin.getConfiguration();
+        final ConnectionConfiguration configuration = plugin.getConnectionConfiguration();
 
         final Optional<Integer> optionalPort = NumberUtil.parseIndex(portString);
         if (!optionalPort.isPresent()) {
@@ -213,7 +202,7 @@ public class PluginCommands extends BukkitPluginObject<Plugin> {
         }
         final int port = optionalPort.get();
 
-        configuration.getConnection().setPort(port);
+        configuration.setPort(port);
         configuration.save();
         communicator().info(sender, "configuration.port.configured", portString);
     }

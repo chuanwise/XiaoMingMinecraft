@@ -1,7 +1,5 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server;
 
-import cn.chuanwise.mclib.net.protocol.PlayerChangeWorldInform;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.event.PlayerChangeWorldEvent;
 
@@ -10,17 +8,10 @@ import java.util.Map;
 
 public class PlayerChangeWorldTrigger extends PlayerTrigger<PlayerChangeWorldEvent> {
     @Override
-    protected String getDescription1() {
-        return "穿越世界触发器";
-    }
-
-    @Override
-    protected TriggerHandleReceipt handle1(PlayerChangeWorldEvent event) {
+    protected TriggerHandleReceipt handle2(PlayerChangeWorldEvent event) {
         final Map<String, Object> environment = new HashMap<>();
-
         environment.put("fromWorld", event.getFromWorldName());
         environment.put("toWorld", event.getToWorldName());
-
-        return new TriggerHandleReceipt.Handled(environment, messages);
+        return new TriggerHandleReceipt.Handled(environment);
     }
 }

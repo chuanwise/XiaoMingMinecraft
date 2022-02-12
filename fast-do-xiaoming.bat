@@ -1,2 +1,2 @@
-del ..\xiaoming-host\plugins\XiaoMingMinecraft-*
-copy .\target\XiaoMingMinecraft-* ..\xiaoming-host\plugins\
+del ..\XiaoMingHost\plugins\XiaoMingMinecraft-*
+copy .\target\XiaoMingMinecraft-* ..\XiaoMingHost\plugins\

@@ -10,14 +10,9 @@ import java.util.Map;
 
 public class PlayerDeathTrigger extends PlayerTrigger<PlayerDeathEvent> {
     @Override
-    protected String getDescription1() {
-        return "死亡触发器";
-    }
-
-    @Override
-    protected TriggerHandleReceipt handle1(PlayerDeathEvent event) {
+    protected TriggerHandleReceipt handle2(PlayerDeathEvent event) {
         final Map<String, Object> environment = new HashMap<>();
         environment.put("message", event.getMessage());
-        return new TriggerHandleReceipt.Handled(environment, messages);
+        return new TriggerHandleReceipt.Handled(environment);
     }
 }

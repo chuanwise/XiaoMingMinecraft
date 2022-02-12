@@ -7,12 +7,7 @@ import java.util.Collections;
 
 public class PlayerJoinTrigger extends PlayerTrigger<PlayerJoinEvent> {
     @Override
-    protected String getDescription1() {
-        return "上线触发器";
-    }
-
-    @Override
-    protected TriggerHandleReceipt handle1(PlayerJoinEvent event) {
-        return new TriggerHandleReceipt.Handled(Collections.singletonMap("message", event.getMessage()), messages);
+    protected TriggerHandleReceipt handle2(PlayerJoinEvent event) {
+        return new TriggerHandleReceipt.Handled(Collections.singletonMap("message", event.getMessage()));
     }
 }

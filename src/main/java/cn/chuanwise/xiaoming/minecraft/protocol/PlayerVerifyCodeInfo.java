@@ -1,6 +1,5 @@
 package cn.chuanwise.xiaoming.minecraft.protocol;
 
-import cn.chuanwise.net.packet.Packet;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PacketInform {
-    Packet packet;
+public class PlayerVerifyCodeInfo {
+    String verifyCode;
+    long timeout;
 }

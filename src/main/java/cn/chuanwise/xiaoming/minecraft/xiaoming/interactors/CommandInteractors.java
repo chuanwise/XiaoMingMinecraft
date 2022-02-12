@@ -2,38 +2,100 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
 import cn.chuanwise.mclib.net.Player;
 import cn.chuanwise.mclib.net.protocol.ExecuteResponse;
-import cn.chuanwise.mclib.util.ColorUtil;
+import cn.chuanwise.mclib.util.ColorCodes;
 import cn.chuanwise.util.CollectionUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
-import cn.chuanwise.xiaoming.user.XiaomingUser;
+import cn.chuanwise.xiaoming.user.XiaoMingUser;
+import cn.chuanwise.xiaoming.util.MiraiCodes;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 @SuppressWarnings("all")
-public class CommandInteractors extends SimpleInteractors<Plugin> {
-    @Filter(Words.CONSOLE + Words.EXECUTE + " {服务器} {r:指令}")
+public class CommandInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
+    @Filter(Words.SERVER + Words.CONSOLE + Words.EXECUTE + " {服务器} {r:指令}")
     @Required("xmmc.admin.execute.console")
-    void consoleExecute(XiaomingUser user,
+    void consoleExecute(XiaoMingUser user,
                         @FilterParameter("服务器") OnlineClient onlineClient,
                         @FilterParameter("指令") String command) throws InterruptedException, TimeoutException {
-        final ExecuteResponse response = onlineClient.getRemoteContact().getConsole().execute(command);
-        showExecuteResponse(user, response);
+        final ExecuteResponse response = onlineClient.getRemoteContact().getConsole().execute(MiraiCodes.contentToString(command));
+        user.sendMessage(executeResponseDetail(response));
+    }
+
+    @Filter(Words.CONSOLE + Words.EXECUTE + " {r:指令}")
+    @Required("xmmc.admin.execute.console")
+    void consoleExecute(XiaoMingUser user,
+                        @FilterParameter("指令") String command) throws InterruptedException, TimeoutException {
+        final Server server = plugin.getServer();
+        if (!server.isBound()) {
+            user.sendError("服务器尚未启动！");
+            return;
+        }
+
+        final List<OnlineClient> onlineClients = server.getOnlineClients();
+        if (onlineClients.isEmpty()) {
+            user.sendError("目前没有任何服务器连接到小明，无法执行指令");
+            return;
+        }
+        if (onlineClients.size() == 1) {
+            final OnlineClient onlineClient = onlineClients.get(0);
+            final ExecuteResponse response = onlineClient.getRemoteContact().getConsole().execute(MiraiCodes.contentToString(command));
+
+            if (plugin.getSessionConfiguration().getServers().size() == 1) {
+                user.sendMessage(executeResponseDetail(response));
+            } else {
+                user.sendMessage("指令在当前在线的「" + onlineClient.getServerInfo().getName() + "」上的运行结果：\n" + executeResponseDetail(response));
+            }
+        } else {
+            user.sendMessage("不只有一个服务器连接到小明，应该明确要执行的后台");
+        }
+    }
+
+    @Filter(Words.ALL + Words.CONSOLE + Words.EXECUTE + " {r:指令}")
+    @Required("xmmc.admin.execute.console")
+    void allConsoleExecute(XiaoMingUser user,
+                           @FilterParameter("指令") String command) throws InterruptedException, TimeoutException {
+        final Server server = plugin.getServer();
+        if (!server.isBound()) {
+            user.sendError("服务器尚未启动 (；′⌒`)");
+            return;
+        }
+
+        final List<OnlineClient> onlineClients = server.getOnlineClients();
+        if (onlineClients.isEmpty()) {
+            user.sendError("没有任何服务器连接到小明");
+            return;
+        }
+
+        command = MiraiCodes.contentToString(command);
+        final Map<String, ExecuteResponse> responses = new HashMap<>();
+        for (OnlineClient onlineClient : onlineClients) {
+            final ExecuteResponse response = onlineClient.getRemoteContact().getConsole().execute(command);
+            responses.put(onlineClient.getServerInfo().getName(), response);
+        }
+
+        if (responses.size() == 1) {
+            user.sendMessage(executeResponseDetail(responses.values().iterator().next()));
+        } else {
+            user.sendMessage("指令在各服务器执行的结果：\n" +
+                    CollectionUtil.toIndexString(responses.entrySet(), x -> x.getKey() + "：" + executeResponseDetail(x.getValue())));
+        }
     }
 
     @Filter(Words.SERVER + Words.PLAYER + Words.EXECUTE + " {服务器} {玩家名} {r:指令}")
+    @Filter(Words.PLAYER + Words.EXECUTE + " {服务器} {玩家名} {r:指令}")
     @Required("xmmc.admin.execute.player")
-    void playerExecute(XiaomingUser user,
-                        @FilterParameter("服务器") OnlineClient onlineClient,
-                        @FilterParameter("玩家名") String playerName,
-                        @FilterParameter("指令") String command) throws InterruptedException, TimeoutException {
+    void playerExecute(XiaoMingUser user,
+                       @FilterParameter("服务器") OnlineClient onlineClient,
+                       @FilterParameter("玩家名") String playerName,
+                       @FilterParameter("指令") String command) throws InterruptedException, TimeoutException {
         final Optional<Player> optionalPlayer = onlineClient.getRemoteContact().getPlayer(playerName);
         if (!optionalPlayer.isPresent()) {
             user.sendMessage("玩家不在线，无法令其执行指令");
@@ -42,31 +104,28 @@ public class CommandInteractors extends SimpleInteractors<Plugin> {
         final Player player = optionalPlayer.get();
 
         final ExecuteResponse response = player.execute(command);
-        showExecuteResponse(user, response);
+        user.sendMessage(executeResponseDetail(response));
     }
 
-    void showExecuteResponse(XiaomingUser user, ExecuteResponse response) {
+    private String executeResponseDetail(ExecuteResponse response) {
         if (response instanceof ExecuteResponse.Succeed) {
             final ExecuteResponse.Succeed succeed = (ExecuteResponse.Succeed) response;
             final List<String> messages = succeed.getMessages();
 
             if (messages.isEmpty()) {
-                user.sendMessage("指令已执行，无任何消息");
+                return "指令已执行，无任何消息";
             } else {
-                user.sendMessage(CollectionUtil.toString(messages, ColorUtil::clearColors));
+                return CollectionUtil.toString(messages, ColorCodes::clearColors, "\n");
             }
-            return;
         }
         if (response instanceof ExecuteResponse.Error) {
             final ExecuteResponse.Error error = (ExecuteResponse.Error) response;
-            user.sendError("指令执行失败：" + ColorUtil.clearColors(error.getMessage()));
-            return;
+            return "执行失败（" + ColorCodes.clearColors(error.getMessage()) + "）";
         }
         if (response instanceof ExecuteResponse.Offline) {
-            user.sendError("玩家不在线，指令执行失败");
-            return;
+            return "玩家不在线，指令执行失败";
         }
 
-        user.sendError("错误的响应信息：" + response);
+        return "错误的响应信息（" + response + "）";
     }
 }

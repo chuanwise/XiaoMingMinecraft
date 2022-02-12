@@ -1,6 +1,6 @@
 {
   "name": "XiaoMingMinecraft",
   "author": "Chuanwise",
-  "main": "cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin",
-  "version": "4.3.6-SNAPSHOT"
+  "main": "cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin",
+  "version": "5.0-SNAPSHOT"
 }

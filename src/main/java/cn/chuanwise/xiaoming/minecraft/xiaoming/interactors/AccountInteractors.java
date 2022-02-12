@@ -6,13 +6,13 @@ import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.protocol.AskResponse;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerInfo;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.Server;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
-import cn.chuanwise.xiaoming.user.XiaomingUser;
+import cn.chuanwise.xiaoming.user.XiaoMingUser;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -20,11 +20,11 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 @SuppressWarnings("all")
-public class AccountInteractors extends SimpleInteractors<Plugin> {
+public class AccountInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
     @Filter(Words.PLAYER + " {qq}")
     @Filter(Words.PLAYER + Words.INFO + " {qq}")
     @Required("xmmc.admin.player.look")
-    void playerInfo(XiaomingUser user, @FilterParameter("qq") long qq) {
+    void playerInfo(XiaoMingUser user, @FilterParameter("qq") long qq) {
         final Optional<PlayerInfo> optionalPlayerInfo = plugin.getPlayerConfiguration().getPlayerInfo(qq);
         if (!optionalPlayerInfo.isPresent()) {
             user.sendError("该用户还没有绑定玩家名");
@@ -40,7 +40,7 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.SERVER + Words.PLAYER + " {玩家名}")
     @Filter(Words.SERVER + Words.PLAYER + Words.INFO + " {玩家名}")
     @Required("xmmc.admin.player.look")
-    void serverPlayer(XiaomingUser user, @FilterParameter("玩家名") String playerName) {
+    void serverPlayer(XiaoMingUser user, @FilterParameter("玩家名") String playerName) {
         final Optional<PlayerInfo> optionalPlayerInfo = plugin.getPlayerConfiguration().getPlayerInfo(playerName);
         if (!optionalPlayerInfo.isPresent()) {
             user.sendError("该玩家还没有绑定 QQ");
@@ -56,7 +56,7 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
     @Filter(Words.MY + Words.PLAYER + Words.INFO + Words.INFO)
     @Filter(Words.MY + Words.PLAYER + Words.INFO)
     @Required("xmmc.user.player.look")
-    void lookMyPlayerInfo(XiaomingUser user) {
+    void lookMyPlayerInfo(XiaoMingUser user) {
         final Optional<PlayerInfo> optionalPlayerInfo = plugin.getPlayerConfiguration().getPlayerInfo(user.getCode());
         if (!optionalPlayerInfo.isPresent()) {
             user.sendError("你还没有绑定玩家名");
@@ -72,7 +72,7 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
 
     @Filter(Words.FORCE + Words.BIND + " {玩家名}")
     @Required("xmmc.admin.player.bind")
-    void forceBind(XiaomingUser user, @FilterParameter("玩家名") String playerName) {
+    void forceBind(XiaoMingUser user, @FilterParameter("玩家名") String playerName) {
         final PlayerConfiguration playerConfiguration = plugin.getPlayerConfiguration();
 
         switch (playerConfiguration.forceBind(user.getCode(), playerName)) {
@@ -91,13 +91,52 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
         }
     }
 
+    @Filter(Words.ENABLE + Words.BIND)
+    @Required("xmmc.admin.player.bind.enable")
+    void enableBind(XiaoMingUser user) {
+        final PlayerConfiguration configuration = plugin.getPlayerConfiguration();
+
+        if (configuration.isEnableBind()) {
+            user.sendMessage("绑定已经开启了");
+        } else {
+            configuration.setEnableBind(true);
+            configuration.readyToSave();
+
+            user.sendMessage("成功开启绑定");
+        }
+    }
+
+    @Filter(Words.DISABLE + Words.BIND)
+    @Required("xmmc.admin.player.bind.disable")
+    void disableBind(XiaoMingUser user) {
+        final PlayerConfiguration configuration = plugin.getPlayerConfiguration();
+
+        if (!configuration.isEnableBind()) {
+            user.sendMessage("绑定并没有开启");
+        } else {
+            configuration.setEnableBind(false);
+            configuration.readyToSave();
+
+            user.sendMessage("成功关闭绑定");
+        }
+    }
+
     @Filter(Words.BIND + " {玩家名}")
     @Required("xmmc.user.player.bind")
-    void bind(XiaomingUser user, @FilterParameter("玩家名") String playerName) throws InterruptedException, TimeoutException {
-        final PlayerConfiguration playerConfiguration = plugin.getPlayerConfiguration();
+    void bind(XiaoMingUser user, @FilterParameter("玩家名") String playerName) throws InterruptedException, TimeoutException {
+        final PlayerConfiguration configuration = plugin.getPlayerConfiguration();
+
+        if (!configuration.isEnableBind()) {
+            if (user.hasPermission("xmmc.admin.player.bind")) {
+                user.sendError("绑定不被允许，但你可以使用「强制绑定  " + playerName + "」以绑定");
+            } else {
+                user.sendError("绑定不被允许，请联系管理员开启绑定");
+            }
+            return;
+        }
 
         // 检查玩家名是否被绑定
-        final Optional<PlayerInfo> optionalSameNamePlayerInfo = playerConfiguration.getPlayerInfo(playerName);
+        final Optional<PlayerInfo> optionalSameNamePlayerInfo = configuration.getPlayerInfo(playerName);
         if (optionalSameNamePlayerInfo.isPresent()) {
             final PlayerInfo playerInfo = optionalSameNamePlayerInfo.get();
             if (playerInfo.hasAccountCode(user.getCode())) {
@@ -130,10 +169,10 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
         user.sendMessage("请留意「" + onlineClient.getServerInfo().getName() + "」上的消息");
 
         // 在服务器上询问
-        final AskResponse response = onlineClient.getServerClient().ask(playerName, user.getAliasAndCode() + "是你的 QQ 账号吗？这个账号申请将你绑定到他的 QQ 上", playerConfiguration.getBoundTimeout());
+        final AskResponse response = onlineClient.getServerClient().ask(playerName, user.getAliasAndCode() + "是你的 QQ 账号吗？这个账号申请将你绑定到他的 QQ 上", configuration.getBoundTimeout());
         switch (response) {
             case ACCEPTED:
-                switch (playerConfiguration.forceBind(user.getCode(), playerName)) {
+                switch (configuration.forceBind(user.getCode(), playerName)) {
                     case REPEAT:
                         user.sendMessage("你已经绑定了玩家「" + playerName + "」");
                         break;
@@ -142,7 +181,7 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
                         break;
                     case SUCCEED:
                         user.sendMessage("成功绑定玩家「" + playerName + "」");
-                        playerConfiguration.readyToSave();
+                        configuration.readyToSave();
                         break;
                     default:
                         throw new NoSuchElementException();
@@ -168,9 +207,9 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
         }
     }
 
-    @Filter(Words.UNBAN + " {玩家名}")
+    @Filter(Words.UNBIND + " {玩家名}")
     @Required("xmmc.user.player.unbind")
-    void unbind(XiaomingUser user, @FilterParameter("玩家名") String playerName) {
+    void unbind(XiaoMingUser user, @FilterParameter("玩家名") String playerName) {
         final PlayerConfiguration playerConfiguration = plugin.getPlayerConfiguration();
         final Optional<PlayerInfo> optionalPlayerInfo = playerConfiguration.getPlayerInfo(user.getCode());
         if (!optionalPlayerInfo.isPresent()) {
@@ -187,6 +226,19 @@ public class AccountInteractors extends SimpleInteractors<Plugin> {
             playerConfiguration.readyToSave();
         } else {
             user.sendMessage("你没有绑定玩家名「" + playerName + "」");
+        }
+    }
+
+    @Filter(Words.FORCE + Words.UNBIND + " {qq} {玩家名}")
+    @Required("xmmc.admin.player.unbind")
+    void forceUnbind(XiaoMingUser user, @FilterParameter("qq") long qq, @FilterParameter("玩家名") String playerName) {
+        final PlayerConfiguration configuration = plugin.getPlayerConfiguration();
+
+        if (configuration.unbind(qq, playerName)) {
+            configuration.readyToSave();
+            user.sendMessage("成功解绑用户「" + xiaoMingBot.getAccountManager().getAliasOrCode(qq) + "」和玩家名「" + playerName + "」");
+        } else {
+            user.sendError("解绑失败，用户「" + xiaoMingBot.getAccountManager().getAliasOrCode(qq) + "」并没有绑定玩家名「" + playerName + "」");
         }
     }
 }

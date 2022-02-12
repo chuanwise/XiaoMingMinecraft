@@ -1,29 +1,42 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.configuration;
 
 import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.ConditionUtil;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.Plugin;
+import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.preservable.SimplePreservable;
 import lombok.Data;
 
+import java.beans.Transient;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Data
-public class PlayerConfiguration extends SimplePreservable<Plugin> {
+public class PlayerConfiguration extends SimplePreservable<XMMCXiaoMingPlugin> {
     long boundTimeout = TimeUnit.MINUTES.toMillis(1);
 
     Set<PlayerInfo> players = new HashSet<>();
+
+    /** use {@link #enableBind} instead */
+    @Deprecated
     boolean allowBind = true;
+
+    @Transient
+    @Deprecated
+    public boolean isAllowBind() {
+        return allowBind;
+    }
+
+    boolean enableBind = true;
 
     public Optional<PlayerInfo> getPlayerInfo(long accountCode) {
         return CollectionUtil.findFirst(players, x -> x.hasAccountCode(accountCode)).toOptional();
     }
 
     public Optional<PlayerInfo> getPlayerInfo(String playerName) {
-        ConditionUtil.notNull(playerName, "player name");
+        Preconditions.nonNull(playerName, "player name");
         return CollectionUtil.findFirst(players, x -> x.hasPlayerName(playerName)).toOptional();
     }
 
@@ -83,21 +96,20 @@ public class PlayerConfiguration extends SimplePreservable<Plugin> {
     }
 
     public boolean unbind(String playerName) {
-        ConditionUtil.notNull(playerName, "player name");
+        Preconditions.nonNull(playerName, "player name");
         final Optional<PlayerInfo> optionalPlayerInfo = getPlayerInfo(playerName);
         if (!optionalPlayerInfo.isPresent()) {
             return false;
         }
         final PlayerInfo playerInfo = optionalPlayerInfo.get();
 
-        if (playerInfo.getPlayerNames().remove(playerName)) {
-            if (playerInfo.getPlayerNames().isEmpty()) {
-                players.remove(playerInfo);
-            }
-            return true;
+        final List<String> playerNames = playerInfo.getPlayerNames();
+        if (playerNames.size() == 1) {
+            players.remove(playerInfo);
         } else {
-            return false;
+            playerNames.remove(playerName);
         }
+        return true;
     }
 
     public BindReceipt bind(long accountCode, String playerName) {

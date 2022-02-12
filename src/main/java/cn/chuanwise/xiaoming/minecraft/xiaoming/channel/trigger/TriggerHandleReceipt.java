@@ -10,8 +10,7 @@ public class TriggerHandleReceipt {
 
     @Data
     public static class Handled extends TriggerHandleReceipt {
-        final Map<String, Object> environment;
-        final List<String> messages;
+        protected final Map<String, Object> environment;
     }
 
     public static class Unhandled extends TriggerHandleReceipt {

@@ -1,19 +1,35 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel;
 
-import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.scope.Scope;
-import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.Trigger;
+import cn.chuanwise.util.Preconditions;
 import lombok.Data;
 
 import java.util.*;
 
 @Data
 public class Channel {
-    boolean enabled = true;
-    String name;
-    Set<Scope> scopes = new HashSet<>();
-    Map<String, Trigger<?>> triggers = new HashMap<>();
+    boolean enable = true;
 
-    public Optional<Trigger<?>> getTrigger(String name) {
-        return Optional.ofNullable(triggers.get(name));
+    String name;
+
+    Map<String, WorkGroup> workGroups = new HashMap<>();
+
+    public boolean handle(Object object) {
+        Preconditions.argumentNonNull(object);
+
+        if (!enable) {
+            return false;
+        }
+        boolean work = false;
+        for (WorkGroup workGroup : workGroups.values()) {
+            if (workGroup.work(object)) {
+                work = true;
+            }
+        }
+
+        return work;
+    }
+
+    public Optional<WorkGroup> getWorkGroup(String name) {
+        return Optional.ofNullable(workGroups.get(name));
     }
 }

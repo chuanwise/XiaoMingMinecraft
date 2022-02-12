@@ -7,12 +7,29 @@ import lombok.NoArgsConstructor;
 public class VerifyResponse {
     protected VerifyResponse() {}
 
-    @Data
     public static class Denied extends VerifyResponse {
+        private static final Denied INSTANCE = new Denied();
+        public static Denied getInstance() {
+            return INSTANCE;
+        }
+        private Denied() {}
     }
 
-    @Data
-    public static class Conflict extends VerifyResponse {}
+    public static class Conflict extends VerifyResponse {
+        private static final Conflict INSTANCE = new Conflict();
+        public static Conflict getInstance() {
+            return INSTANCE;
+        }
+        private Conflict() {}
+    }
+
+    public static class Cancelled extends VerifyResponse {
+        private static final Cancelled INSTANCE = new Cancelled();
+        public static Cancelled getInstance() {
+            return INSTANCE;
+        }
+        private Cancelled() {}
+    }
 
     @Data
     @AllArgsConstructor
