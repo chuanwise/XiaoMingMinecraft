@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.protocol;
 
-import cn.chuanwise.mclib.net.protocol.NetLibProtocol;
-import cn.chuanwise.mclib.net.protocol.SendSameMessageInform;
-import cn.chuanwise.mclib.net.protocol.SendTitleRequest;
+import cn.chuanwise.mclib.bukkit.net.protocol.NetLibProtocol;
+import cn.chuanwise.mclib.bukkit.net.protocol.SendSameMessageInform;
+import cn.chuanwise.mclib.bukkit.net.protocol.SendTitleRequest;
 import cn.chuanwise.net.Protocol;
 import cn.chuanwise.net.netty.protocol.BaseProtocol;
 import cn.chuanwise.net.netty.exception.ProtocolException;

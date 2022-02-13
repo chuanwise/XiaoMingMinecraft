@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
-import cn.chuanwise.mclib.net.protocol.NetLibProtocol;
+import cn.chuanwise.mclib.bukkit.net.protocol.NetLibProtocol;
 import cn.chuanwise.xiaoming.minecraft.protocol.XMMCProtocol;
 import org.junit.jupiter.api.Test;
 

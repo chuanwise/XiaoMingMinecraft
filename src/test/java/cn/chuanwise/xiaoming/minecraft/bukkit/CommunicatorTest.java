@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
-import cn.chuanwise.mclib.bungee.Communicator;
+import cn.chuanwise.mclib.bukkit.communicator.Communicator;
 import cn.chuanwise.mclib.storage.Language;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

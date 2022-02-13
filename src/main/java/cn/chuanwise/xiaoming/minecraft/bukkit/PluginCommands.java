@@ -1,9 +1,13 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
-import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
-import cn.chuanwise.mclib.bukkit.OnCommand;
-import cn.chuanwise.mclib.bukkit.Parameter;
+import cn.chuanwise.commandlib.annotation.Description;
+import cn.chuanwise.commandlib.annotation.Format;
+import cn.chuanwise.commandlib.annotation.Permission;
+import cn.chuanwise.commandlib.annotation.Reference;
+import cn.chuanwise.commandlib.command.Command;
+import cn.chuanwise.mclib.bukkit.plugin.BukkitPluginObject;
 import cn.chuanwise.util.*;
+import cn.chuanwise.util.Collections;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.BaseConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.net.Client;
@@ -15,16 +19,19 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.io.IOException;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
-public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
+public class PluginCommands
+        extends BukkitPluginObject<XMMCBukkitPlugin> {
     public PluginCommands(XMMCBukkitPlugin plugin) {
         super(plugin);
     }
 
-    @OnCommand(value = "connect", permission = "xmmc.admin.connect")
+    @Description("尝试和小明建立连接")
+    @Format("xm|xiaomingminecraft|xmmc connect")
+    @Permission("xmmc.admin.connect")
     void connect(CommandSender sender) {
         final Client client = plugin.getClient();
         if (client.isConnected()) {
@@ -40,7 +47,9 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         }
     }
 
-    @OnCommand(value = "disconnect", permission = "xmmc.admin.disconnect")
+    @Description("断开和小明的连接")
+    @Format("xm|xiaomingminecraft|xmmc disconnect")
+    @Permission("xmmc.admin.disconnect")
     void disconnect(CommandSender sender) {
         final Client client = plugin.getClient();
         if (!client.isConnected()) {
@@ -56,7 +65,9 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         }
     }
 
-    @OnCommand(value = "debug", permission = "xmmc.admin.debug")
+    @Description("开关调试模式")
+    @Format("xm|xiaomingminecraft|xmmc debug")
+    @Permission("xmmc.admin.debug")
     void debug(CommandSender sender) throws IOException {
         final BaseConfiguration baseConfiguration = plugin.getBaseConfiguration();
         final boolean setTo = !baseConfiguration.isDebug();
@@ -71,8 +82,11 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         }
     }
 
-    @OnCommand(value = "bind @qq", permission = "xmmc.user.bind")
-    void bind(CommandSender sender, @Parameter("qq") String qqString) throws InterruptedException, TimeoutException {
+    @Description("绑定 QQ")
+    @Format("xm|xiaomingminecraft|xmmc bind [qq]")
+    @Permission("xmmc.user.bind")
+    void bind(CommandSender sender,
+              @Reference("qq") String qqString) throws InterruptedException, TimeoutException {
         final Optional<Long> optionalLong = NumberUtil.parseLong(qqString);
         if (!optionalLong.isPresent()) {
             communicator().errorString(sender, "qwq");
@@ -146,7 +160,9 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         }
     }
 
-    @OnCommand(value = "unbind", permission = "xmmc.user.unbind")
+    @Description("和自己已经绑定的 QQ 解绑")
+    @Format("xm|xiaomingminecraft|xmmc unbind")
+    @Permission("xmmc.user.unbind")
     void unbind(CommandSender sender) {
         final Client client = plugin.getClient();
         if (!client.isConnected()) {
@@ -173,7 +189,9 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         }
     }
 
-    @OnCommand(value = "reload", permission = "xmmc.admin.reload")
+    @Description("重新载入插件数据")
+    @Format("xm|xiaomingminecraft|xmmc reload")
+    @Permission("xmmc.admin.config.reload")
     void reload(CommandSender sender) {
         try {
             plugin.reload();
@@ -183,16 +201,22 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         }
     }
 
-    @OnCommand(value = "config host @host", permission = "xmmc.admin.config.host")
-    void configHost(CommandSender sender, @Parameter("host") String host) throws IOException {
+    @Description("修改小明主机地址")
+    @Format("xm|xiaomingminecraft|xmmc config host [host]")
+    @Permission("xmmc.admin.config.host")
+    void configHost(CommandSender sender,
+                    @Reference("host") String host) throws IOException {
         final ConnectionConfiguration configuration = plugin.getConnectionConfiguration();
         configuration.setHost(host);
         configuration.save();
         communicator().info(sender, "configuration.host.configured", host);
     }
 
-    @OnCommand(value = "config port @port", permission = "xmmc.admin.config.port")
-    void configPort(CommandSender sender, @Parameter("port") String portString) throws IOException {
+    @Description("修改小明端口")
+    @Format("xm|xiaomingminecraft|xmmc config port [port]")
+    @Permission("xmmc.admin.config.port")
+    void configPort(CommandSender sender,
+                    @Reference("port") String portString) throws IOException {
         final ConnectionConfiguration configuration = plugin.getConnectionConfiguration();
 
         final Optional<Integer> optionalPort = NumberUtil.parseIndex(portString);
@@ -207,8 +231,64 @@ public class PluginCommands extends BukkitPluginObject<XMMCBukkitPlugin> {
         communicator().info(sender, "configuration.port.configured", portString);
     }
 
-    @OnCommand(value = "request @command...", permission = "xmmc.user.request")
-    void requestExecute(CommandSender sender, @Parameter("command") String command) {
+    @Description("查看自己可执行的指令列表")
+    @Format("xm|xiaomingminecraft|xmmc help")
+    @Permission("xmmc.user.help")
+    void helpExecutable(CommandSender sender) {
+        final List<Command> commands = plugin.getCommandLib()
+                .getCommandManager()
+                .getCommands()
+                .stream()
+                .filter(x -> {
+                    final String permission = x.getPermission();
+                    return Strings.isEmpty(permission) || sender.hasPermission(permission);
+                })
+                .sorted(Comparator.comparing(Command::getUsage))
+                .collect(Collectors.toList());
 
+        communicator().error(sender, "help.executable", CollectionUtil.toIndexString(commands,
+                (i, c) -> "§3" + (i + 1) + "§7. ",
+                c -> {
+                    final boolean hasPermission = Strings.isEmpty(c.getPermission()) || sender.hasPermission(c.getPermission());
+                    return (hasPermission ? "§b" : "§3")
+                            + c.getUsage()
+                            + (Strings.nonEmpty(c.getDescription()) ?
+                            " §8§l: "
+                                    + (hasPermission ? "§f" : "§7")
+                                    + c.getDescription()
+                            : "");
+                }));
     }
+
+    @Description("查看所有指令列表")
+    @Format("xm|xiaomingminecraft|xmmc help all")
+    @Permission("xmmc.user.help")
+    void helpAll(CommandSender sender) {
+        final List<Command> commands = plugin.getCommandLib()
+                .getCommandManager()
+                .getCommands()
+                .stream()
+                .sorted(Comparator.comparing(Command::getUsage))
+                .collect(Collectors.toList());
+
+        communicator().info(sender, "help.all", CollectionUtil.toIndexString(commands,
+                (i, c) -> "§3" + (i + 1) + "§7. ",
+                c -> {
+                    final boolean hasPermission = Strings.isEmpty(c.getPermission()) || sender.hasPermission(c.getPermission());
+                    return (hasPermission ? "§b" : "§3")
+                            + c.getUsage()
+                            + (Strings.nonEmpty(c.getDescription()) ?
+                                    " §8§l: "
+                                    + (hasPermission ? "§f" : "§7")
+                                    + c.getDescription()
+                            : "");
+                }));
+    }
+
+//    @Format("xm|xiaomingminecraft|xmmc request [command~]")
+//    @Permission("xmmc.admin.config.port")
+//    void requestExecute(CommandSender sender,
+//                        @Reference("command") String command) {
+//
+//    }
 }

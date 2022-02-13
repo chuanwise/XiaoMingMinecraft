@@ -19,7 +19,7 @@ public abstract class Trigger<T> {
     static {
         final Map<Class<?>, String> names = new HashMap<>();
 
-        names.put(PlayerChangeWorldTrigger.class, "玩家穿越世界触发器");
+        names.put(PlayerChangeWorldTrigger.class, "玩家切换世界触发器");
         names.put(PlayerChatTrigger.class, "玩家聊天触发器");
         names.put(PlayerDeathTrigger.class, "玩家死亡触发器");
         names.put(PlayerJoinTrigger.class, "玩家上线触发器");

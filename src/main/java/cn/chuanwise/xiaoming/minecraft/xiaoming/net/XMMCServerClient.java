@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
-import cn.chuanwise.mclib.net.protocol.NetLibProtocol;
-import cn.chuanwise.mclib.net.protocol.SendSameMessageInform;
+import cn.chuanwise.mclib.bukkit.net.protocol.NetLibProtocol;
+import cn.chuanwise.mclib.bukkit.net.protocol.SendSameMessageInform;
 import cn.chuanwise.net.netty.packet.PacketHandler;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.CollectionUtil;

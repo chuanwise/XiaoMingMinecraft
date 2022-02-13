@@ -1,9 +1,9 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit.net;
 
-import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
 import cn.chuanwise.mclib.bukkit.ask.Asker;
 import cn.chuanwise.mclib.bukkit.event.BukkitTpsEvent;
-import cn.chuanwise.mclib.bukkit.util.PlayerUtil;
+import cn.chuanwise.mclib.bukkit.plugin.BukkitPluginObject;
+import cn.chuanwise.mclib.bukkit.util.Players;
 import cn.chuanwise.net.netty.packet.PacketHandler;
 import cn.chuanwise.util.Preconditions;
 import cn.chuanwise.util.Times;
@@ -25,7 +25,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Getter
-public class XMMCClientContact extends BukkitPluginObject<XMMCBukkitPlugin> implements Listener {
+public class XMMCClientContact
+        extends BukkitPluginObject<XMMCBukkitPlugin>
+        implements Listener {
     protected final PacketHandler packetHandler;
 
     public XMMCClientContact(XMMCBukkitPlugin plugin, PacketHandler packetHandler) {
@@ -84,7 +86,7 @@ public class XMMCClientContact extends BukkitPluginObject<XMMCBukkitPlugin> impl
 
         packetHandler.setOnRequest(XMMCProtocol.REQUEST_ASK, request -> {
             final String playerName = request.getPlayerName();
-            final Optional<Player> optionalPlayer = PlayerUtil.getPlayer(server(), playerName);
+            final Optional<Player> optionalPlayer = Players.getPlayer(server(), playerName);
             if (!optionalPlayer.isPresent()) {
                 return AskResponse.OFFLINE;
             }

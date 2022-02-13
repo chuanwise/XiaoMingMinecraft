@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.mclib.util.ColorCodes;
+import cn.chuanwise.mclib.util.Colors;
 import cn.chuanwise.toolkit.container.Container;
 import cn.chuanwise.util.CollectionUtil;
 import cn.chuanwise.util.Times;
@@ -131,7 +131,7 @@ public class StateInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
                 .collect(Collectors.toList());
 
         user.sendMessage("服务器上有 " + playerNames.size() + " 个人：\n" +
-                ColorCodes.clearColors(CollectionUtil.toIndexString(playerNames)));
+                Colors.clearColors(CollectionUtil.toIndexString(playerNames)));
     }
 
     @Filter(Words.ONLINE + Words.PLAYER)
@@ -162,7 +162,7 @@ public class StateInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
             receipt.put(onlineClient.getServerInfo().getName(), playerNames);
         }
 
-        user.sendMessage(ColorCodes.clearColors(CollectionUtil.toIndexString(receipt.entrySet(), x -> x.getKey() + "：" +
+        user.sendMessage(Colors.clearColors(CollectionUtil.toIndexString(receipt.entrySet(), x -> x.getKey() + "：" +
                 Optional.ofNullable(CollectionUtil.toString(x.getValue())).orElse("（无）"))));
     }
 }

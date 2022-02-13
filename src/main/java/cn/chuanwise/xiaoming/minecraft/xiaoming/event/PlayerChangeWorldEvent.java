@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.event;
 
-import cn.chuanwise.mclib.net.protocol.PlayerChangeWorldInform;
-import cn.chuanwise.mclib.net.protocol.PlayerJoinInform;
+import cn.chuanwise.mclib.bukkit.net.protocol.PlayerChangeWorldInform;
+import cn.chuanwise.mclib.bukkit.net.protocol.PlayerChangeWorldInform;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.net.OnlineClient;
 import lombok.Data;
 

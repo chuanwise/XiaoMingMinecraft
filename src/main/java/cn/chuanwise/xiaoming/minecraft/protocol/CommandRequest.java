@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.protocol;
 
-import cn.chuanwise.mclib.net.protocol.SimplePlayerRelated;
+import cn.chuanwise.mclib.bukkit.net.protocol.SimplePlayerRelated;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

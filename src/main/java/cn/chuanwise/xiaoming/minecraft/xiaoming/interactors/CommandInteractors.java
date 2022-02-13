@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.mclib.net.Player;
-import cn.chuanwise.mclib.net.protocol.ExecuteResponse;
-import cn.chuanwise.mclib.util.ColorCodes;
+import cn.chuanwise.mclib.bukkit.net.Player;
+import cn.chuanwise.mclib.bukkit.net.protocol.ExecuteResponse;
+import cn.chuanwise.mclib.util.Colors;
 import cn.chuanwise.util.CollectionUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
@@ -115,12 +115,12 @@ public class CommandInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
             if (messages.isEmpty()) {
                 return "指令已执行，无任何消息";
             } else {
-                return CollectionUtil.toString(messages, ColorCodes::clearColors, "\n");
+                return CollectionUtil.toString(messages, Colors::clearColors, "\n");
             }
         }
         if (response instanceof ExecuteResponse.Error) {
             final ExecuteResponse.Error error = (ExecuteResponse.Error) response;
-            return "执行失败（" + ColorCodes.clearColors(error.getMessage()) + "）";
+            return "执行失败（" + Colors.clearColors(error.getMessage()) + "）";
         }
         if (response instanceof ExecuteResponse.Offline) {
             return "玩家不在线，指令执行失败";

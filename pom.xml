@@ -6,7 +6,7 @@
 
     <groupId>cn.chuanwise</groupId>
     <artifactId>XiaoMingMinecraft</artifactId>
-    <version>5.0.1-SNAPSHOT</version>
+    <version>5.0.2-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -36,20 +36,8 @@
         <!-- my lib-->
         <dependency>
             <groupId>cn.chuanwise</groupId>
-            <artifactId>NetLib</artifactId>
-            <version>1.1-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>cn.chuanwise</groupId>
-            <artifactId>McLibCore</artifactId>
-            <version>1.1-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>cn.chuanwise</groupId>
-            <artifactId>CommandLib</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <artifactId>BukkitLib</artifactId>
+            <version>1.2-SNAPSHOT</version>
         </dependency>
 
         <!-- net lib -->

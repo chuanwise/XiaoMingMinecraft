@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit.net;
 
-import cn.chuanwise.mclib.bukkit.BukkitPluginObject;
-import cn.chuanwise.mclib.net.bukkit.BukkitLocalContact;
+import cn.chuanwise.mclib.bukkit.net.contact.BukkitLocalContact;
+import cn.chuanwise.mclib.bukkit.plugin.BukkitPluginObject;
 import cn.chuanwise.net.netty.event.*;
 import cn.chuanwise.net.netty.exception.ProtocolException;
 import cn.chuanwise.net.netty.handler.DebugDuplexHandler;
@@ -47,7 +47,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 @Getter
-public class Client extends BukkitPluginObject<XMMCBukkitPlugin> {
+public class Client
+        extends BukkitPluginObject<XMMCBukkitPlugin> {
     /** 连接的引导器 */
     protected final Bootstrap bootstrap = new Bootstrap();
 

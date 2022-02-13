@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
 import cn.chuanwise.api.Flushable;
-import cn.chuanwise.mclib.net.contact.NetLibRemoteContact;
+import cn.chuanwise.mclib.bukkit.net.contact.NetLibRemoteContact;
 import cn.chuanwise.net.netty.protocol.BaseProtocol;
 import cn.chuanwise.net.netty.packet.PacketHandler;
 import cn.chuanwise.net.packet.SignPacket;

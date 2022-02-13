@@ -1,14 +1,15 @@
 package cn.chuanwise.xiaoming.minecraft.bukkit;
 
-import cn.chuanwise.mclib.bukkit.BukkitPlugin;
-import cn.chuanwise.mclib.bukkit.Commander;
 import cn.chuanwise.mclib.bukkit.ask.Asker;
 import cn.chuanwise.mclib.bukkit.ask.AskerManager;
-import cn.chuanwise.mclib.bukkit.util.CommandUtil;
+import cn.chuanwise.mclib.bukkit.command.BukkitCommandLib;
+import cn.chuanwise.mclib.bukkit.plugin.BukkitPlugin;
+import cn.chuanwise.mclib.bukkit.util.Commands;
 import cn.chuanwise.mclib.storage.Language;
 import cn.chuanwise.storage.file.StoredFile;
 import cn.chuanwise.util.Preconditions;
 import cn.chuanwise.util.Streams;
+import cn.chuanwise.xiaoming.minecraft.bukkit.command.MessageHandler;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.BaseConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.WhitelistConfiguration;
@@ -27,8 +28,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Getter
-public class XMMCBukkitPlugin extends BukkitPlugin {
+public class XMMCBukkitPlugin
+        extends BukkitPlugin {
     protected static XMMCBukkitPlugin INSTANCE;
+    private BukkitCommandLib commandLib;
+
     public static XMMCBukkitPlugin getInstance() {
         Preconditions.stateNonNull(Objects.nonNull(INSTANCE), "插件尚未加载！");
         return INSTANCE;
@@ -99,13 +103,19 @@ public class XMMCBukkitPlugin extends BukkitPlugin {
         }
 
         // 注册指令
+        commandLib = new BukkitCommandLib(this);
+        commandLib.registerHandler(new MessageHandler());
+
         commands = new PluginCommands(this);
-        new Commander(this).commandBuilder()
-                .name("xiaomingminecraft")
-                .aliases("xmmc", "xiaomingmc", "xm")
-                .commands(commands)
+
+        commandLib.getCommandManager()
+                .registerCommands(commands);
+
+        commandLib.commandBuilder()
+                .name("xm")
+                .aliases("xiaomingminecraft", "xmmc", "xiaomingmc")
                 .build()
-                .register();
+                .active();
 
         setupAskModule();
     }
@@ -153,9 +163,9 @@ public class XMMCBukkitPlugin extends BukkitPlugin {
                 return false;
             }
         };
-        CommandUtil.registerCommand(acceptCommand, this);
-        CommandUtil.registerCommand(denyCommand, this);
-        CommandUtil.registerCommand(ignoreCommand, this);
+        Commands.registerCommand(acceptCommand, this);
+        Commands.registerCommand(denyCommand, this);
+        Commands.registerCommand(ignoreCommand, this);
     }
 
     @Override

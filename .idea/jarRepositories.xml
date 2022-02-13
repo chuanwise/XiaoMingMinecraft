@@ -22,6 +22,11 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="chuanwise-maven" />
+      <option name="name" value="chuanwise-maven" />
+      <option name="url" value="https://maven.chuanwise.cn" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="bungeecord-repo" />
       <option name="name" value="bungeecord-repo" />
       <option name="url" value="https://oss.sonatype.org/content/repositories/snapshots" />
