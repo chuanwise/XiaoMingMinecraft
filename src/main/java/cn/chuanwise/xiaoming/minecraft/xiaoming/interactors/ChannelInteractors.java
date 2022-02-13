@@ -14,6 +14,8 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.Executor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.ServerTagExecutor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.server.ServerBroadcastExecutor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.server.ServerConsoleCommandExecutor;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.xiaoming.GroupBroadcastExecutor;
+import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.xiaoming.PrivateBroadcastExecutor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.xiaoming.XiaoMingSendMessageExecutor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server.*;
@@ -199,6 +201,19 @@ public class ChannelInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
     }
 
     void configXiaoMingTriggerGroupTag(XiaoMingUser user, GroupTagTrigger trigger) {
+        user.sendMessage("至少要带有什么标签才能激活该触发器呢？回复「所有」或一个标签");
+        final String reply = user.nextMessageOrExit().serialize();
+
+        final String groupTag;
+        if (Objects.equals(reply, "所有")) {
+            groupTag = null;
+        } else {
+            groupTag = reply;
+        }
+        trigger.setGroupTag(groupTag);
+    }
+
+    void configServerTriggerGroupTag(XiaoMingUser user, GroupTagTrigger trigger) {
         user.sendMessage("服务器玩家绑定的 QQ 至少要带有什么标签才能激活该触发器呢？回复「所有」或一个标签");
         final String reply = user.nextMessageOrExit().serialize();
 
@@ -453,6 +468,55 @@ public class ChannelInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
             final XiaoMingSendMessageExecutor executor = new XiaoMingSendMessageExecutor();
             user.sendMessage("要在 QQ 上发送什么消息？");
             executor.setFormat(user.nextMessageOrExit().serialize());
+
+            user.sendMessage("目标变量名为？");
+            executor.setTargetKey(user.nextMessageOrExit().serialize());
+            return executor;
+        });
+        executorConfigurers.put(GroupBroadcastExecutor.class, user -> {
+            final GroupBroadcastExecutor executor = new GroupBroadcastExecutor();
+
+            user.sendMessage("要在带有什么标签的群里广播？回复「所有」或群聊标签");
+            final String reply = user.nextMessageOrExit().serialize();
+            final String groupTag;
+            if (Objects.equals(reply, "所有")) {
+                groupTag = Tags.ALL;
+            } else {
+                groupTag = reply;
+            }
+            executor.setGroupTag(groupTag);
+
+            user.sendMessage("需要在这些群里广播什么消息？");
+            executor.setFormat(user.nextMessageOrExit().serialize());
+
+            return executor;
+        });
+        executorConfigurers.put(PrivateBroadcastExecutor.class, user -> {
+            final PrivateBroadcastExecutor executor = new PrivateBroadcastExecutor();
+
+            user.sendMessage("要向带有什么标签的账户私聊广播？回复「所有」或账户标签");
+            String accountTag;
+            String reply = user.nextMessageOrExit().serialize();
+            while (true) {
+                if (Objects.equals(reply, "所有")) {
+                    user.sendWarning("你真的要令该执行器向所有账户私聊广播吗？请回复「是」，或一个新的账户标签");
+                    final String nextReply = user.nextMessageOrExit().serialize();
+                    if (Objects.equals(nextReply, "是")) {
+                        accountTag = Tags.ALL;
+                        break;
+                    } else {
+                        reply = nextReply;
+                    }
+                } else {
+                    accountTag = reply;
+                    break;
+                }
+            }
+            executor.setAccountTag(accountTag);
+
+            user.sendMessage("需要向这些用户私聊广播什么消息？");
+            executor.setFormat(user.nextMessageOrExit().serialize());
+
             return executor;
         });
     }

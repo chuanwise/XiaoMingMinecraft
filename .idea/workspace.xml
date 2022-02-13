@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="add LICENSE">
+    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="添加工作组、执行器、触发器机制、白名单功能、修复若干已知问题">
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -160,7 +161,14 @@
       <option name="project" value="LOCAL" />
       <updated>1641529519046</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="添加工作组、执行器、触发器机制、白名单功能、修复若干已知问题">
+      <created>1644696004411</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1644696004411</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -184,6 +192,7 @@
     <MESSAGE value="更新 README.md" />
     <MESSAGE value="更新 .gitignore" />
     <MESSAGE value="add LICENSE" />
-    <option name="LAST_COMMIT_MESSAGE" value="add LICENSE" />
+    <MESSAGE value="添加工作组、执行器、触发器机制、白名单功能、修复若干已知问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="添加工作组、执行器、触发器机制、白名单功能、修复若干已知问题" />
   </component>
 </project>

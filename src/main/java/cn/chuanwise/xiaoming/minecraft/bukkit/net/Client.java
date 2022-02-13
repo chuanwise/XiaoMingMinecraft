@@ -479,8 +479,7 @@ public class Client extends BukkitPluginObject<XMMCBukkitPlugin> {
     }
 
     public Optional<ChannelFuture> connect() {
-        reconnectStateHandler.enable();
-        reconnectStateHandler.setAttemptCount(0);
+        reconnectStateHandler.reset();
         return connectHandler.connect();
     }
 

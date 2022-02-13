@@ -4,6 +4,7 @@ import cn.chuanwise.util.CollectionUtil;
 import cn.chuanwise.util.Collections;
 import cn.chuanwise.util.NumberUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
+import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
 import cn.chuanwise.xiaoming.contact.contact.GroupContact;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
@@ -162,5 +163,205 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
         user.sendMessage("成功建立服务器「" + serverInfo.getName() + "」" +
                 "和群聊「" + xiaoMingBot.getGroupInformationManager().getAliasAndCode(groupCode) + "」" +
                 "之间的双向互通频道「" + channelName + "」，转发规则：" + messageFilter.getDescription());
+    }
+
+    @Filter(Words.PLAYER + Words.CHAT + Words.WORK_GROUP + Words.GUILDER + " {频道} {工作组}")
+    @Required("xmmc.admin.channel.config")
+    void addChannelPlayerChatWorkGroup(XiaoMingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("工作组") String workGroupName) {
+        if (channel.getWorkGroup(workGroupName).isPresent()) {
+            user.sendError("频道「" + channel.getName() + "」已存在工作组「" + workGroupName + "」");
+            return;
+        }
+
+        final Map<String, ServerInfo> servers = plugin.getSessionConfiguration().getServers();
+        if (servers.isEmpty()) {
+            user.sendWarning("小明还不认识任何服务器，在使用「迎接新服务器」添加服务器后再使用互通向导吧");
+            return;
+        }
+
+        // choose server info
+        final ServerInfo serverInfo;
+        if (servers.size() == 1) {
+            serverInfo = servers.values().iterator().next();
+        } else {
+            user.sendMessage("你不只有一个服务器：\n" +
+                    CollectionUtil.toIndexString(servers.values(), ServerInfo::getName) + "\n" +
+                    "告诉小明你希望创建互通工作组对应的服务器名吧！");
+            ServerInfo tempServerInfo = null;
+            while (true) {
+                final String serverName = user.nextMessageOrExit().serialize();
+                tempServerInfo = servers.get(serverName);
+
+                if (Objects.isNull(tempServerInfo)) {
+                    user.sendMessage("找不到服务器「" + serverName + "」，再输入一遍服务器名吧！");
+                } else {
+                    break;
+                }
+            }
+            serverInfo = tempServerInfo;
+        }
+
+        // choose group
+        long groupCode;
+
+        if (user instanceof GroupXiaoMingUser) {
+            groupCode = ((GroupXiaoMingUser) user).getGroupCode();
+        } else {
+            user.sendMessage("需要和服务器「" + serverInfo.getName() + "」互通的 QQ 群群号是？");
+            while (true) {
+                final String groupCodeString = user.nextMessageOrExit().serialize();
+                final Optional<Long> optionalGroupCode = NumberUtil.parseLong(groupCodeString);
+
+                if (optionalGroupCode.isPresent()) {
+                    groupCode = optionalGroupCode.get();
+                    break;
+                } else {
+                    user.sendError("「" + groupCodeString + "」好像并不是合理的群号，重新输入一遍吧");
+                }
+            }
+
+            // get group contact
+            final Optional<GroupContact> optionalGroupContact = xiaoMingBot.getContactManager().getGroupContact(groupCode);
+            if (!optionalGroupContact.isPresent()) {
+                user.sendWarning("小明好像还不在这个群里，你确定要用这个群作为互通群吗？如果是，请回复我「是」，其他任何回复将取消操作");
+                if (!Objects.equals(user.nextMessageOrExit().serialize(), "是")) {
+                    user.sendMessage("操作已取消");
+                    return;
+                }
+            }
+        }
+
+        final String groupTag = String.valueOf(groupCode);
+        final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
+
+        // msg filter
+        final MessageFilter messageFilter;
+        user.sendMessage("你希望转发所有消息还是以确定开头的消息呢？\n" +
+                "如果转发所有消息，回复「所有」，或回复一个消息开头（建议尽可能短，例如 #）");
+        final String messageHead = user.nextMessageOrExit().serialize();
+        if (Objects.equals(messageHead, "所有")) {
+            messageFilter = new MessageFilter.All();
+        } else {
+            messageFilter = new MessageFilter.StartWith(MiraiCodes.contentToString(messageHead));
+        }
+
+        // config player => group
+        final WorkGroup playerChatWorkGroup = new WorkGroup();
+        playerChatWorkGroup.setName(workGroupName);
+
+        final PlayerChatTrigger playerChatTrigger = new PlayerChatTrigger();
+        playerChatTrigger.setMessageFilter(messageFilter);
+
+        final GroupBroadcastExecutor playerChatExecutor = new GroupBroadcastExecutor();
+        playerChatExecutor.setGroupTag(groupTag);
+        playerChatExecutor.setFormat("{playerOrAlias}：{message}");
+
+        playerChatWorkGroup.setTrigger(playerChatTrigger);
+        playerChatWorkGroup.setExecutors(Collections.asList(playerChatExecutor));
+
+        channel.getWorkGroups().put(workGroupName, playerChatWorkGroup);
+        channelConfiguration.readyToSave();
+        user.sendMessage("成功为频道「" + channel.getName() + "」添加了工作组「" + workGroupName + "」，" +
+                "该工作组将服务器「" + serverInfo.getName() + "」上的消息转发到群「" + xiaoMingBot.getGroupInformationManager().getAliasAndCode(groupCode) + "」中");
+    }
+
+    @Filter(Words.GROUP + Words.MESSAGE + Words.WORK_GROUP + Words.GUILDER + " {频道} {工作组}")
+    @Required("xmmc.admin.channel.config")
+    void addChannelGroupMessageWorkGroup(XiaoMingUser user, @FilterParameter("频道") Channel channel, @FilterParameter("工作组") String workGroupName) {
+        if (channel.getWorkGroup(workGroupName).isPresent()) {
+            user.sendError("频道「" + channel.getName() + "」已存在工作组「" + workGroupName + "」");
+            return;
+        }
+
+        final Map<String, ServerInfo> servers = plugin.getSessionConfiguration().getServers();
+        if (servers.isEmpty()) {
+            user.sendWarning("小明还不认识任何服务器，在使用「迎接新服务器」添加服务器后再使用互通向导吧");
+            return;
+        }
+
+        // choose server info
+        final ServerInfo serverInfo;
+        if (servers.size() == 1) {
+            serverInfo = servers.values().iterator().next();
+        } else {
+            user.sendMessage("你不只有一个服务器：\n" +
+                    CollectionUtil.toIndexString(servers.values(), ServerInfo::getName) + "\n" +
+                    "告诉小明你希望创建互通工作组对应的服务器名吧！");
+            ServerInfo tempServerInfo = null;
+            while (true) {
+                final String serverName = user.nextMessageOrExit().serialize();
+                tempServerInfo = servers.get(serverName);
+
+                if (Objects.isNull(tempServerInfo)) {
+                    user.sendMessage("找不到服务器「" + serverName + "」，再输入一遍服务器名吧！");
+                } else {
+                    break;
+                }
+            }
+            serverInfo = tempServerInfo;
+        }
+
+        // choose group
+        long groupCode;
+
+        if (user instanceof GroupXiaoMingUser) {
+            groupCode = ((GroupXiaoMingUser) user).getGroupCode();
+        } else {
+            user.sendMessage("需要和服务器「" + serverInfo.getName() + "」互通的 QQ 群群号是？");
+            while (true) {
+                final String groupCodeString = user.nextMessageOrExit().serialize();
+                final Optional<Long> optionalGroupCode = NumberUtil.parseLong(groupCodeString);
+
+                if (optionalGroupCode.isPresent()) {
+                    groupCode = optionalGroupCode.get();
+                    break;
+                } else {
+                    user.sendError("「" + groupCodeString + "」好像并不是合理的群号，重新输入一遍吧");
+                }
+            }
+
+            // get group contact
+            final Optional<GroupContact> optionalGroupContact = xiaoMingBot.getContactManager().getGroupContact(groupCode);
+            if (!optionalGroupContact.isPresent()) {
+                user.sendWarning("小明好像还不在这个群里，你确定要用这个群作为互通群吗？如果是，请回复我「是」，其他任何回复将取消操作");
+                if (!Objects.equals(user.nextMessageOrExit().serialize(), "是")) {
+                    user.sendMessage("操作已取消");
+                    return;
+                }
+            }
+        }
+
+        final String groupTag = String.valueOf(groupCode);
+        final ChannelConfiguration channelConfiguration = plugin.getChannelConfiguration();
+
+        // msg filter
+        final MessageFilter messageFilter;
+        user.sendMessage("你希望转发所有消息还是以确定开头的消息呢？\n" +
+                "如果转发所有消息，回复「所有」，或回复一个消息开头（建议尽可能短，例如 #）");
+        final String messageHead = user.nextMessageOrExit().serialize();
+        if (Objects.equals(messageHead, "所有")) {
+            messageFilter = new MessageFilter.All();
+        } else {
+            messageFilter = new MessageFilter.StartWith(MiraiCodes.contentToString(messageHead));
+        }
+
+        // config group => server
+        final WorkGroup groupMessageWorkGroup = new WorkGroup();
+        groupMessageWorkGroup.setName(workGroupName);
+
+        final GroupMessageTrigger groupMessageTrigger = new GroupMessageTrigger();
+        groupMessageTrigger.setMessageFilter(messageFilter);
+        groupMessageTrigger.setGroupTag(groupTag);
+
+        final ServerBroadcastExecutor groupMessageExecutor = new ServerBroadcastExecutor();
+        groupMessageExecutor.setFormat("§7[§3{contact.alias}§7] §b{sender.alias} §8§l: §r{message}");
+
+        groupMessageWorkGroup.setTrigger(groupMessageTrigger);
+        groupMessageWorkGroup.setExecutors(Collections.asList(groupMessageExecutor));
+
+        channel.getWorkGroups().put(workGroupName, groupMessageWorkGroup);
+        channelConfiguration.readyToSave();
+        user.sendMessage("成功为频道「" + channel.getName() + "」添加了工作组「" + workGroupName + "」，" +
+                "该工作组将群「" + xiaoMingBot.getGroupInformationManager().getAliasAndCode(groupCode) + "」中的消息转发到服务器「" + serverInfo.getName() + "」上");
     }
 }
