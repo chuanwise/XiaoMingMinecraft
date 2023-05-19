@@ -1,19 +1,19 @@
 package cn.chuanwise.xiaoming.minecraft.protocol;
 
-import cn.chuanwise.mclib.bukkit.net.protocol.NetLibProtocol;
-import cn.chuanwise.mclib.bukkit.net.protocol.SendSameMessageInform;
-import cn.chuanwise.mclib.bukkit.net.protocol.SendTitleRequest;
 import cn.chuanwise.net.Protocol;
-import cn.chuanwise.net.netty.protocol.BaseProtocol;
-import cn.chuanwise.net.netty.exception.ProtocolException;
 import cn.chuanwise.net.packet.InformPacketType;
 import cn.chuanwise.net.packet.ObtainPacketType;
 import cn.chuanwise.net.packet.RequestPacketType;
+import cn.chuanwise.mclib.bukkit.net.protocol.NetLibProtocol;
+import cn.chuanwise.mclib.bukkit.net.protocol.SendSameMessageInform;
+import cn.chuanwise.mclib.bukkit.net.protocol.SendTitleRequest;
+import cn.chuanwise.net.netty.protocol.BaseProtocol;
+import cn.chuanwise.net.netty.exception.ProtocolException;
 
 /** XMMC 通讯协议 */
 public class XMMCProtocol extends Protocol {
     /** 通讯协议版本 */
-    public static final String VERSION = "1.1-SNAPSHOT";
+    public static final String VERSION = "1.2";
 
     public static final RequestPacketType<Long, Long> REQUEST_CONFIRM_ACTIVE = new RequestPacketType<>(Long.class, Long.class);
     public static final InformPacketType<String> INFORM_MESSAGE = new InformPacketType<>(String.class);

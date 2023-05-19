@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="minecraft" name="Minecraft">
+      <configuration>
+        <autoDetectTypes>
+          <platformType>BUKKIT</platformType>
+          <platformType>BUNGEECORD</platformType>
+        </autoDetectTypes>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/target/test-classes" />
@@ -12,12 +22,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="BukkitLib" />
-    <orderEntry type="module" module-name="CoreLib" />
+    <orderEntry type="module" module-name="BukkitPanda" />
+    <orderEntry type="module" module-name="CommonPanda" />
     <orderEntry type="module" module-name="CommandLib" />
-    <orderEntry type="library" name="Maven: org.projectlombok:lombok:1.18.22" level="project" />
     <orderEntry type="module" module-name="WiseToolkit" />
-    <orderEntry type="library" name="Maven: org.apache.commons:commons-collections4:4.4" level="project" />
     <orderEntry type="module-library">
       <library name="Maven: org.bukkit:bukkit:1.7.10-R0.1-SNAPSHOT">
         <CLASSES>
@@ -48,38 +56,38 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.guava:guava:21.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.bstats:bstats-bungeecord:2.2.1" level="project" />
     <orderEntry type="module" module-name="XiaoMingBot" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-api-jvm:2.9.1" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-reflect:1.5.30" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib:1.5.30" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-api-jvm:2.10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-reflect:1.6.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib:1.6.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.2.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib-common:1.5.20" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.2.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.5.1" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-client-okhttp:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-client-core-jvm:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-http-jvm:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-utils-jvm:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-io-jvm:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-http-cio-jvm:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-network-jvm:1.5.4" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.squareup.okhttp3:okhttp:4.6.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: com.squareup.okio:okio:2.6.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.30" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.5.30" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:kotlin-jvm-blocking-bridge-jvm:1.10.6-1530.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-utils-jvm:2.9.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-client-okhttp:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.5.31" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-client-core-jvm:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-http-jvm:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-utils-jvm:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-io-jvm:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-http-cio-jvm:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: io.ktor:ktor-network-jvm:1.6.5" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.squareup.okhttp3:okhttp:4.9.2" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.squareup.okio:okio:2.8.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: me.him188:kotlin-jvm-blocking-bridge-runtime-jvm:2.0.0-160.3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-utils-jvm:2.10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-console-compiler-annotations-jvm:2.10.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.2.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains:annotations:19.0.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.logging.log4j:log4j-api:2.15.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:atomicfu-jvm:0.16.3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:atomicfu-jvm:0.17.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-io:0.1.16" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-jvm:2.9.1" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: net.mamoe:mirai-core-jvm:2.10.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: io.netty:netty-all:4.1.63.Final" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.bouncycastle:bcprov-jdk15on:1.64" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jline:jline:3.20.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.fusesource.jansi:jansi:2.4.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.commons:commons-collections4:4.4" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-log4j12:2.0.0-alpha5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-api:2.0.0-alpha5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: log4j:log4j:1.2.17" level="project" />
@@ -94,5 +102,6 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.13.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.13.1" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.13.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.projectlombok:lombok:1.18.22" level="project" />
   </component>
 </module>

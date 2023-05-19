@@ -43,14 +43,14 @@ public class NotificationConfiguration extends SimplePreservable<XMMCXiaoMingPlu
         String placeHolder;
     }
     NotificationInfo at = new NotificationInfo(
-            new NotificationInfo.Title(false, "§e有人 §c@ §e你", "§a请注意§7「§e{contact.alias}」§a中的消息"),
-            new NotificationInfo.Message(true, "§7[§6有人 §e@ §6你§7] §e{contact.alias} §8| §e{user.alias} §8§l: §e{message}"),
+            new NotificationInfo.Title(false, "§e有人 §c@ §e你", "§a请注意§7「§e{communicator().alias}」§a中的消息"),
+            new NotificationInfo.Message(true, "§7[§6有人 §e@ §6你§7] §e{communicator().alias} §8| §e{user.alias} §8§l: §e{message}"),
             "@{target.alias} "
     );
 
     NotificationInfo atAll = new NotificationInfo(
-            new NotificationInfo.Title(true, "§c§l@ §c全体成员", "§c请注意§7「§e{contact.alias}」§c中的消息"),
-            new NotificationInfo.Message(true, "§7[§c@ §4全体成员§7] §4{contact.alias} §8| §c{user.alias} §8§l: §c{message}"),
+            new NotificationInfo.Title(true, "§c§l@ §c全体成员", "§c请注意§7「§e{communicator().alias}」§c中的消息"),
+            new NotificationInfo.Message(true, "§7[§c@ §4全体成员§7] §4{communicator().alias} §8| §c{user.alias} §8§l: §c{message}"),
             "@全体成员 "
     );
 }

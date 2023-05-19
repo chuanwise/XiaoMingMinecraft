@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger;
 
-import cn.chuanwise.util.Types;
-import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.common.util.Types;
+import cn.chuanwise.common.util.Preconditions;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming.GroupMessageTrigger;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming.MemberMuteTrigger;
@@ -55,7 +55,13 @@ public abstract class Trigger<T> {
         if (!handledClass.isInstance(object)) {
             return TriggerHandleReceipt.Unhandled.getInstance();
         }
-        return handle0((T) object);
+        final TriggerHandleReceipt receipt = handle0((T) object);
+        if (receipt instanceof TriggerHandleReceipt.Handled) {
+            final Map<String, Object> environment = new HashMap<>(((TriggerHandleReceipt.Handled) receipt).getEnvironment());
+            environment.put("trigger", this);
+            return new TriggerHandleReceipt.Handled(environment);
+        }
+        return receipt;
     }
 
     protected abstract TriggerHandleReceipt handle0(T t);

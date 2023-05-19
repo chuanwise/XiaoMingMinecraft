@@ -1,8 +1,10 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming;
 
-import cn.chuanwise.util.Times;
+import cn.chuanwise.common.util.Times;
 import cn.chuanwise.xiaoming.contact.contact.GroupContact;
 import cn.chuanwise.xiaoming.contact.contact.MemberContact;
+import cn.chuanwise.xiaoming.contact.contact.XiaoMingContact;
+import cn.chuanwise.xiaoming.contact.message.Message;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
 import lombok.Data;
@@ -28,7 +30,7 @@ public class MemberMuteTrigger
 
         final Map<String, Object> environment = new HashMap<>();
         environment.put("groupTag", groupTag);
-        environment.put("contact", groupContact);
+        environment.put("communicator()", groupContact);
         environment.put("member", memberContact);
         environment.put("duration", event.getDurationSeconds());
         environment.put("timeLength", Times.toTimeLength(TimeUnit.SECONDS.toMillis(event.getDurationSeconds())));

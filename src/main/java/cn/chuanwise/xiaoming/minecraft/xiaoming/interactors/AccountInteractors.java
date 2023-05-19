@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.util.CollectionUtil;
+import cn.chuanwise.common.util.CollectionUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;

@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming;
 
-import cn.chuanwise.util.Strings;
+import cn.chuanwise.common.util.Strings;
 import cn.chuanwise.xiaoming.event.MessageEvent;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.GroupTagTrigger;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;

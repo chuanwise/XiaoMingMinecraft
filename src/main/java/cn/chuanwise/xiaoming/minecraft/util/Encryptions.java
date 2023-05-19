@@ -12,7 +12,7 @@ import java.security.spec.InvalidKeySpecException;
  * Author: havoc AT defuse.ca
  * www: http://crackstation.net/hashing-security.htm
  */
-public class PasswordHashUtil {
+public class Encryptions {
     public static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA1";
 
     private static final SecureRandom RANDOM = new SecureRandom();

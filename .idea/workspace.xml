@@ -4,9 +4,63 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="增加两种执行器的向导">
+    <list default="true" id="980bb6b2-4fc7-4f44-ba66-af9bc1a13daa" name="Changes" comment="使用 BukkitLib 完成对 Bukkit 端指令的解析">
+      <change afterPath="$PROJECT_DIR$/.idea/XiaoMingMinecraft.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/qaplug_profiles.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/command/NetCommands.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/XiaoMingMinecraft.iml" beforeDir="false" afterPath="$PROJECT_DIR$/XiaoMingMinecraft.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/PluginCommands.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/command/PluginCommands.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/XMMCBukkitPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/XMMCBukkitPlugin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/command/MessageHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/command/MessageHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/listeners/WhitelistListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/listeners/WhitelistListener.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/net/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/net/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/net/XMMCClientContact.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/bukkit/net/XMMCClientContact.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/XMMCProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/protocol/XMMCProtocol.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/util/PasswordHashUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/util/Encryptions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/XMMCXiaoMingPlugin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/XMMCXiaoMingPlugin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/Channel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/Channel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/WorkGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/WorkGroup.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/executor/server/ServerBroadcastExecutor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/executor/server/ServerBroadcastExecutor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/executor/server/ServerConsoleCommandExecutor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/executor/server/ServerConsoleCommandExecutor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/MessageFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/MessageFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/Trigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/Trigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/server/PlayerChatTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/server/PlayerChatTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/server/PlayerTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/server/PlayerTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/server/ServerTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/server/ServerTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/GroupMessageTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/GroupMessageTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/MemberMuteTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/MemberMuteTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/XiaoMingBindableTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/XiaoMingBindableTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/XiaoMingMessageTrigger.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/channel/trigger/xiaoming/XiaoMingMessageTrigger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/command/Command.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/command/Command.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/NotificationConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/NotificationConfiguration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/PlayerConfiguration.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/PlayerConfiguration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/ServerInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/configuration/ServerInfo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/AccountInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/AccountInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/BstatsInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/BstatsInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/ChannelInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/ChannelInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/CommandInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/CommandInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/GuilderInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/GuilderInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/PlayerVerifyCodeInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/PlayerVerifyCodeInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/StateInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/StateInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/VerifyInteractors.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/interactors/VerifyInteractors.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/listeners/CommandListeners.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/listeners/CommandListeners.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/listeners/NotificationListeners.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/listeners/NotificationListeners.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/net/OnlineClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/net/OnlineClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/net/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/net/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/net/XMMCServerClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/chuanwise/xiaoming/minecraft/xiaoming/net/XMMCServerClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/language.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/language.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/plugin.yml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/plugin.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/xiaoming.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/xiaoming.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/chuanwise/xiaoming/minecraft/bukkit/ClientTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/chuanwise/xiaoming/minecraft/bukkit/CommunicatorTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/chuanwise/xiaoming/minecraft/bukkit/LanguageTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/chuanwise/xiaoming/minecraft/bukkit/PlayerConfigurationTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/cn/chuanwise/xiaoming/minecraft/bukkit/ProtocolTest.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,20 +83,9 @@
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
+        <option name="mavenHome" value="$PROJECT_DIR$/../../../../../tool/maven/apache-maven-3.8.4" />
         <option name="useMavenConfig" value="true" />
       </MavenGeneralSettings>
-    </option>
-    <option name="enabledProfiles">
-      <list>
-        <option value="jdk-8" />
-      </list>
-    </option>
-    <option name="disabledProfiles">
-      <list>
-        <option value="jdk-16" />
-        <option value="jdk-17" />
-        <option value="jdk-11" />
-      </list>
     </option>
   </component>
   <component name="ProjectId" id="232iVIXkGFyvzHImCytHEbeXWoM" />
@@ -57,7 +100,13 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../McLib" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/lib" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.62413794" />
@@ -65,6 +114,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\projects\program\java\Maven\Jdk8\XiaoMingMinecraft\lib" />
       <recent name="E:\projects\program\java\Maven\Jdk8\XiaoMingMinecraft\images" />
       <recent name="E:\projects\program\java\Maven\Jdk8\XiaoMingMinecraft" />
     </key>
@@ -83,6 +133,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1640938605142</updated>
+      <workItem from="1646812655272" duration="1028000" />
+      <workItem from="1647251503320" duration="623000" />
+      <workItem from="1647918154232" duration="612000" />
+      <workItem from="1647997028531" duration="110000" />
+      <workItem from="1648604575179" duration="1610000" />
+      <workItem from="1649160780825" duration="65000" />
+      <workItem from="1649240517156" duration="29000" />
+      <workItem from="1661385553754" duration="723000" />
+      <workItem from="1684381700583" duration="2848000" />
     </task>
     <task id="LOCAL-00001" summary="初次提交">
       <created>1640959206672</created>
@@ -175,8 +234,18 @@
       <option name="project" value="LOCAL" />
       <updated>1644718795050</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="使用 BukkitLib 完成对 Bukkit 端指令的解析">
+      <created>1644782405320</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1644782405320</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
@@ -201,6 +270,7 @@
     <MESSAGE value="add LICENSE" />
     <MESSAGE value="添加工作组、执行器、触发器机制、白名单功能、修复若干已知问题" />
     <MESSAGE value="增加两种执行器的向导" />
-    <option name="LAST_COMMIT_MESSAGE" value="增加两种执行器的向导" />
+    <MESSAGE value="使用 BukkitLib 完成对 Bukkit 端指令的解析" />
+    <option name="LAST_COMMIT_MESSAGE" value="使用 BukkitLib 完成对 Bukkit 端指令的解析" />
   </component>
 </project>

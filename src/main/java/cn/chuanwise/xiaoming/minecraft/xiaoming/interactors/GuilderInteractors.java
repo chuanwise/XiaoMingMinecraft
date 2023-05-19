@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Collections;
-import cn.chuanwise.util.NumberUtil;
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Collections;
+import cn.chuanwise.common.util.NumberUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
@@ -79,7 +79,7 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
                 }
             }
 
-            // get group contact
+            // get group communicator()
             final Optional<GroupContact> optionalGroupContact = xiaoMingBot.getContactManager().getGroupContact(groupCode);
             if (!optionalGroupContact.isPresent()) {
                 user.sendWarning("小明好像还不在这个群里，你确定要用这个群作为互通群吗？如果是，请回复我「是」，其他任何回复将取消操作");
@@ -129,7 +129,7 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
         groupMessageTrigger.setGroupTag(groupTag);
 
         final ServerBroadcastExecutor groupMessageExecutor = new ServerBroadcastExecutor();
-        groupMessageExecutor.setFormat("§7[§3{contact.alias}§7] §b{sender.alias} §8§l: §r{message}");
+        groupMessageExecutor.setFormat("§7[§3{communicator().alias}§7] §b{sender.alias} §8§l: §r{message}");
 
         groupMessageWorkGroup.setTrigger(groupMessageTrigger);
         groupMessageWorkGroup.setExecutors(Collections.asList(groupMessageExecutor));
@@ -142,7 +142,7 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
             user.sendMessage("给频道起一个名字吧！");
             while (true) {
                 final String tempChannelName = user.nextMessageOrExit().serialize();
-                if (Objects.isNull(channelConfiguration.getChannels().get(serverInfo.getName()))) {
+                if (Objects.isNull(channelConfiguration.getChannels().get(tempChannelName))) {
                     channelName = tempChannelName;
                     break;
                 } else {
@@ -220,7 +220,7 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
                 }
             }
 
-            // get group contact
+            // get group communicator()
             final Optional<GroupContact> optionalGroupContact = xiaoMingBot.getContactManager().getGroupContact(groupCode);
             if (!optionalGroupContact.isPresent()) {
                 user.sendWarning("小明好像还不在这个群里，你确定要用这个群作为互通群吗？如果是，请回复我「是」，其他任何回复将取消操作");
@@ -320,7 +320,7 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
                 }
             }
 
-            // get group contact
+            // get group communicator()
             final Optional<GroupContact> optionalGroupContact = xiaoMingBot.getContactManager().getGroupContact(groupCode);
             if (!optionalGroupContact.isPresent()) {
                 user.sendWarning("小明好像还不在这个群里，你确定要用这个群作为互通群吗？如果是，请回复我「是」，其他任何回复将取消操作");
@@ -354,7 +354,7 @@ public class GuilderInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
         groupMessageTrigger.setGroupTag(groupTag);
 
         final ServerBroadcastExecutor groupMessageExecutor = new ServerBroadcastExecutor();
-        groupMessageExecutor.setFormat("§7[§3{contact.alias}§7] §b{sender.alias} §8§l: §r{message}");
+        groupMessageExecutor.setFormat("§7[§3{communicator().alias}§7] §b{sender.alias} §8§l: §r{message}");
 
         groupMessageWorkGroup.setTrigger(groupMessageTrigger);
         groupMessageWorkGroup.setExecutors(Collections.asList(groupMessageExecutor));

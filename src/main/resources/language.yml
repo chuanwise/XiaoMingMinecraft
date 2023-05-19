@@ -55,7 +55,7 @@ messages:
     disconnect:
       succeed: '成功断开连接'
       failed: '未成功断开连接'
-      multi: '尚未连接到小明，无需断连'
+      unnecessary: '尚未连接到小明，无需断连'
     state:
       disconnected: '服务器尚未连接到小明，请稍后再试'
       timeout: '请求超时'
@@ -106,10 +106,10 @@ messages:
       configured: '小明端口已被设置为 {.0}'
       failed: '端口值「{.0}」错误，应该是数字'
   help:
-    executable: '你有权限执行的指令有：
+    executable: '你有权限执行的指令有§r：
     
     {.0}'
-    all: '所有插件指令：
+    all: '所有插件指令§r：
     
     {.0}'
   command:
@@ -117,14 +117,15 @@ messages:
       dispatch: '调度指令时出现异常 {.0}，详见控制台'
       execute: '执行指令时出现异常 {.0}，详见控制台'
       multiple: '指令匹配多条格式，请联系插件作者'
-      parse: '方法参数解析失败'
-      commandSender: '该指令只能由{.0}执行'
       unhandled:
-        list: '没有匹配输入的指令格式，你是想要执行这些指令吗？
+        list: '没有匹配输入的指令格式，你是想要执行这些指令吗？§r
         
         {.0}'
+        singleton: '你希望执行的是这条指令吗？§r
+        
+        §7> §r{.0}'
         empty: '没有匹配输入的指令格式，也没有权限执行相关指令'
-      format: '没有匹配输入的指令格式'
+      format: '没有该指令，你可以使用 §e/xm help §c查看指令列表'
     failure:
       parse: '参数解析失败，这很可能是参数不正确'
     permission: '小明不能帮你做这件事哦，因为你还缺少权限 §8§l: §e{.0}'

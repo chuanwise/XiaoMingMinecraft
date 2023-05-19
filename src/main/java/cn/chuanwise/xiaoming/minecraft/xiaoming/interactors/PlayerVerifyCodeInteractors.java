@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Times;
 import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Times;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
@@ -12,6 +12,7 @@ import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguratio
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerVerifyCodeConfiguration;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.util.Words;
 import cn.chuanwise.xiaoming.user.XiaoMingUser;
+import lombok.Getter;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -101,5 +102,17 @@ public class PlayerVerifyCodeInteractors extends SimpleInteractors<XMMCXiaoMingP
                     CollectionUtil.toString(verifyInfo.entrySet(), x -> x.getKey() + "：" + x.getValue().getPlayerName()
                             + (System.currentTimeMillis() - x.getValue().getTimeMillis() > configuration.getTimeout() ? "（已失效）" : "")));
         }
+    }
+}
+
+@Getter
+class Demo {
+    String chuanwise = "hey!";
+}
+
+class F {
+    void f() {
+        final Demo demo = new Demo();
+        final String chuanwise = demo.getChuanwise();
     }
 }

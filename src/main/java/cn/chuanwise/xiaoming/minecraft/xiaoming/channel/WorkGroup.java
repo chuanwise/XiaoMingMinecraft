@@ -1,15 +1,12 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel;
 
-import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.common.util.Preconditions;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.Executor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.Trigger;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 public class WorkGroup {
@@ -24,7 +21,7 @@ public class WorkGroup {
      * @param object 激发对象
      * @return 工作组是否响应
      */
-    public boolean work(Object object) {
+    public boolean work(Object object, Map<String, Object> environment) {
         final TriggerHandleReceipt receipt = trigger.handle(object);
         if (receipt instanceof TriggerHandleReceipt.Unhandled) {
             return false;
@@ -32,11 +29,18 @@ public class WorkGroup {
         Preconditions.state(receipt instanceof TriggerHandleReceipt.Handled);
         final TriggerHandleReceipt.Handled handled = (TriggerHandleReceipt.Handled) receipt;
 
-        final Map<String, Object> environment = new HashMap<>(handled.getEnvironment());
+        final Map<String, Object> newEnvironment = new HashMap<>(handled.getEnvironment());
+        newEnvironment.putAll(environment);
+        newEnvironment.put("workGroup", this);
+
         for (Executor executor : executors) {
-            executor.execute(environment);
+            executor.execute(newEnvironment);
         }
 
         return true;
+    }
+
+    public boolean work(Object object) {
+        return work(object, Collections.emptyMap());
     }
 }

@@ -1,10 +1,12 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.listeners;
 
-import cn.chuanwise.util.Collections;
-import cn.chuanwise.util.Strings;
+import cn.chuanwise.common.util.Collections;
+import cn.chuanwise.common.util.Strings;
 import cn.chuanwise.xiaoming.account.Account;
 import cn.chuanwise.xiaoming.annotation.EventListener;
+import cn.chuanwise.xiaoming.contact.contact.GroupContact;
 import cn.chuanwise.xiaoming.contact.contact.XiaoMingContact;
+import cn.chuanwise.xiaoming.contact.message.Message;
 import cn.chuanwise.xiaoming.event.MessageEvent;
 import cn.chuanwise.xiaoming.event.SimpleListeners;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
@@ -129,7 +131,7 @@ public class NotificationListeners extends SimpleListeners<XMMCXiaoMingPlugin> {
             }
 
             // verify if at
-            thisPlayerAt = thisPlayerAt || Collections.containsAny(atAccountCodes, playerInfo.getAccountCodes());
+            thisPlayerAt = thisPlayerAt || Collections.isIntersected(atAccountCodes, playerInfo.getAccountCodes());
 
             if (thisPlayerAt) {
                 atPlayerNames.addAll(playerNames);

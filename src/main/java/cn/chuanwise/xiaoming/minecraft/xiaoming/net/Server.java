@@ -1,20 +1,20 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.net;
 
-import cn.chuanwise.api.Flushable;
-import cn.chuanwise.api.Logger;
+import cn.chuanwise.common.api.Flushable;
+import cn.chuanwise.common.api.Logger;
 import cn.chuanwise.net.netty.exception.ProtocolException;
 import cn.chuanwise.net.netty.handler.DebugDuplexHandler;
 import cn.chuanwise.net.netty.handler.HandlerListener;
 import cn.chuanwise.net.netty.handler.ListenerHandler;
 import cn.chuanwise.net.netty.packet.JsonPacketCodec;
 import cn.chuanwise.net.packet.*;
-import cn.chuanwise.toolkit.box.Box;
-import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Preconditions;
-import cn.chuanwise.util.ObjectUtil;
+import cn.chuanwise.common.place.Box;
+import cn.chuanwise.common.place.Container;
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Preconditions;
+import cn.chuanwise.common.util.ObjectUtil;
 import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
-import cn.chuanwise.xiaoming.minecraft.util.PasswordHashUtil;
+import cn.chuanwise.xiaoming.minecraft.util.Encryptions;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
 import cn.chuanwise.xiaoming.minecraft.protocol.XMMCProtocol;
@@ -143,7 +143,7 @@ public class Server
             // 寻找使用此密码的服务器
             ServerInfo serverInfo = null;
             for (ServerInfo info : sessionConfiguration.getServers().values()) {
-                if (PasswordHashUtil.validatePassword(info.getPassword(), passwordHash)) {
+                if (Encryptions.validatePassword(info.getPassword(), passwordHash)) {
                     serverInfo = info;
                     break;
                 }
@@ -307,7 +307,6 @@ public class Server
                         pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
 
                         pipeline.addLast(new JsonPacketCodec(XMMCProtocol.getInstance()));
-                        pipeline.addLast(new DebugDuplexHandler("packet", logger));
                         pipeline.addLast(listenerHandler);
 
                         pipeline.addLast(new VerifyHandler());

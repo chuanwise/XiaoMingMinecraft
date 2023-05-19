@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming;
 
 import cn.chuanwise.mclib.bukkit.net.Player;
-import cn.chuanwise.util.Preconditions;
-import cn.chuanwise.util.Strings;
+import cn.chuanwise.common.util.Preconditions;
+import cn.chuanwise.common.util.Strings;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.BindableTrigger;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.TriggerHandleReceipt;
@@ -102,7 +102,7 @@ public abstract class XiaoMingBindableTrigger<T>
         } else {
             playerOrName = plugin.getXiaoMingBot().getAccountManager().getAliasOrCode(accountCode);
         }
-        environment.put("playerOrName", playerOrName);
+        environment.put("playerOrAlias", playerOrName);
 
         environment.put("accountTag", accountTag);
         environment.put("mustBind", mustBind);

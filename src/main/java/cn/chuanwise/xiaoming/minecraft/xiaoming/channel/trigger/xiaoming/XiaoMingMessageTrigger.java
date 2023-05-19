@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.xiaoming;
 
-import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.common.util.Preconditions;
 import cn.chuanwise.xiaoming.contact.contact.XiaoMingContact;
 import cn.chuanwise.xiaoming.event.MessageEvent;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
@@ -17,8 +17,9 @@ import java.util.Map;
 @Data
 @SuppressWarnings("all")
 public abstract class XiaoMingMessageTrigger
-        extends XiaoMingBindableTrigger<MessageEvent>
-        implements MessageFilterTrigger {
+    extends XiaoMingBindableTrigger<MessageEvent>
+    implements MessageFilterTrigger {
+    
     MessageFilter messageFilter = new MessageFilter.All();
 
     @Override
@@ -45,11 +46,11 @@ public abstract class XiaoMingMessageTrigger
 
         // 扩展环境
         final Map<String, Object> environment = new HashMap<>(handled.getEnvironment());
-        environment.put("mustBind", mustBind);
         environment.put("sender", user);
-        final XiaoMingContact contact = user.getContact();
-        environment.put("contact", contact);
-        environment.put("contactAlias", contact.getAlias());
+        environment.put("user", user);
+        final XiaoMingContact communicator = user.getContact();
+        environment.put("communicator()", communicator);
+        environment.put("communicator()Alias", communicator.getAlias());
         environment.putAll(accepted.getEnvironment());
         return new TriggerHandleReceipt.Handled(environment);
     }

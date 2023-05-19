@@ -1,9 +1,11 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.util.StringUtil;
-import cn.chuanwise.util.Times;
+import cn.chuanwise.common.util.StringUtil;
+import cn.chuanwise.common.util.Times;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.Required;
+import cn.chuanwise.xiaoming.contact.contact.GroupContact;
+import cn.chuanwise.xiaoming.contact.contact.XiaoMingContact;
 import cn.chuanwise.xiaoming.contact.message.Message;
 import cn.chuanwise.xiaoming.exception.InteractExitedException;
 import cn.chuanwise.xiaoming.exception.InteractInterrtuptedException;

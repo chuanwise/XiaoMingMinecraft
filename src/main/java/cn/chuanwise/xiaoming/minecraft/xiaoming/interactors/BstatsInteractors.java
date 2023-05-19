@@ -1,10 +1,10 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.toolkit.map.TypePathGetter;
-import cn.chuanwise.toolkit.serialize.Serializer;
-import cn.chuanwise.toolkit.serialize.json.JacksonSerializer;
-import cn.chuanwise.util.Preconditions;
-import cn.chuanwise.util.Streams;
+import cn.chuanwise.common.map.TypePathGetter;
+import cn.chuanwise.common.serialize.Serializer;
+import cn.chuanwise.common.serialize.json.JacksonSerializer;
+import cn.chuanwise.common.util.Preconditions;
+import cn.chuanwise.common.util.Streams;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.interactor.SimpleInteractors;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;

@@ -2,12 +2,12 @@ package cn.chuanwise.xiaoming.minecraft.bukkit.command;
 
 import cn.chuanwise.commandlib.command.Command;
 import cn.chuanwise.commandlib.event.*;
-import cn.chuanwise.commandlib.handler.CommandLibHandlerAdapter;
+import cn.chuanwise.commandlib.handler.SharableHandlerAdapter;
 import cn.chuanwise.mclib.bukkit.communicator.Communicator;
 import cn.chuanwise.mclib.bukkit.net.Player;
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Strings;
-import cn.chuanwise.util.Throwables;
+import cn.chuanwise.pandalib.command.Properties;
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Throwables;
 import cn.chuanwise.xiaoming.minecraft.bukkit.XMMCBukkitPlugin;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class MessageHandler
-        extends CommandLibHandlerAdapter {
+        extends SharableHandlerAdapter {
 
     private static final Map<Class<?>, String> COMMAND_SENDER_NAMES;
     static {
@@ -38,8 +38,7 @@ public class MessageHandler
 
         if (event instanceof CommandDispatchErrorEvent) {
             final CommandDispatchErrorEvent commandDispatchErrorEvent = (CommandDispatchErrorEvent) event;
-            final CommandSender commandSender = (CommandSender) commandDispatchErrorEvent
-                    .getDispatchContext().getCommandSender();
+            final CommandSender commandSender = (CommandSender) commandDispatchErrorEvent.getCommandSender();
 
             if (!(commandSender instanceof ConsoleCommandSender)) {
                 communicator.error(commandSender, "command.error.dispatch");
@@ -51,7 +50,7 @@ public class MessageHandler
 
         if (event instanceof CommandExecuteErrorEvent) {
             final CommandExecuteErrorEvent commandExecuteErrorEvent = (CommandExecuteErrorEvent) event;
-            final CommandSender commandSender = (CommandSender) commandExecuteErrorEvent.getCommandContext().getCommandSender();
+            final CommandSender commandSender = (CommandSender) commandExecuteErrorEvent.getCommandSender();
 
             if (!(commandSender instanceof ConsoleCommandSender)) {
                 communicator.error(commandSender, "command.error.execute");
@@ -63,69 +62,49 @@ public class MessageHandler
 
         if (event instanceof MultipleCommandsMatchedEvent) {
             final MultipleCommandsMatchedEvent multipleCommandsMatchedEvent = (MultipleCommandsMatchedEvent) event;
-            final CommandSender commandSender = (CommandSender) multipleCommandsMatchedEvent.getDispatchContext().getCommandSender();
+            final CommandSender commandSender = (CommandSender) multipleCommandsMatchedEvent.getCommandSender();
 
             communicator.error(commandSender, "command.error.multiple");
             return true;
         }
 
-        if (event instanceof ParseErrorEvent) {
-            final ParseErrorEvent parseErrorEvent = (ParseErrorEvent) event;
-            final CommandSender commandSender = (CommandSender) parseErrorEvent.getCommandContext().getCommandSender();
-
-            final Class<?> requiredClass = parseErrorEvent.getRequiredClass();
-            if (CommandSender.class.isAssignableFrom(requiredClass)) {
-                final String name = Optional.ofNullable(COMMAND_SENDER_NAMES.get(requiredClass))
-                        .orElse(" " + requiredClass.getSimpleName() + " ");
-                communicator.error(commandSender, "command.error.commandSender", name);
-            } else {
-                communicator.error(commandSender, "command.error.parse");
-            }
-            return true;
-        }
-
-        if (event instanceof ParseFailedEvent) {
-            final ParseFailedEvent parseFailedEvent = (ParseFailedEvent) event;
-            final CommandSender commandSender = (CommandSender) parseFailedEvent.getCommandContext().getCommandSender();
+        if (event instanceof FillFailedEvent) {
+            final FillFailedEvent providerFailedEvent = (FillFailedEvent) event;
+            final CommandSender commandSender = (CommandSender) providerFailedEvent.getCommandSender();
 
             communicator.error(commandSender, "command.failure.parse");
             return true;
         }
 
-        if (event instanceof PermissionDeniedEvent) {
-            final PermissionDeniedEvent permissionDeniedEvent = (PermissionDeniedEvent) event;
-            final CommandSender commandSender = (CommandSender) permissionDeniedEvent.getCommandContext().getCommandSender();
-
-            communicator.error(commandSender, "command.permission", permissionDeniedEvent.getPermission());
-            return true;
-        }
-
         if (event instanceof UnhandledCommandEvent) {
             final UnhandledCommandEvent unhandledCommandEvent = (UnhandledCommandEvent) event;
-            final CommandSender commandSender = (CommandSender) unhandledCommandEvent.getDispatchContext().getCommandSender();
+            final CommandSender commandSender = (CommandSender) unhandledCommandEvent.getCommandSender();
 
-            final List<Command> commands = unhandledCommandEvent.getCommandTree()
-                    .getSubCommands()
+            final List<Command> commands = unhandledCommandEvent.getCommandTreeNode()
+                    .getRelatedCommands()
                     .stream()
                     .filter(x -> {
-                        final String permission = x.getPermission();
-                        return Strings.isEmpty(permission) || commandSender.hasPermission(permission);
+                        return x.getProperty(Properties.PERMISSION)
+                                .map(commandSender::hasPermission)
+                                .orElse(true);
                     })
-                    .sorted(Comparator.comparing(Command::getUsage))
+                    .sorted(Comparator.comparing(Command::getFormat))
                     .collect(Collectors.toList());
 
             if (commands.isEmpty()) {
                 communicator.error(commandSender, "command.error.unhandled.empty");
+            } else if (commands.size() == 1) {
+                communicator.error(commandSender, "command.error.unhandled.singleton", commands.get(0).getFormat());
             } else {
                 communicator.warn(commandSender, "command.error.unhandled.list", CollectionUtil.toString(commands,
-                        c -> "§7> §f" + c.getUsage()));
+                        c -> "§8> §f/" + c.getFormat() + "§r", "\n"));
             }
             return true;
         }
 
-        if (event instanceof WrongFormatEvent) {
-            final WrongFormatEvent wrongFormatEvent = (WrongFormatEvent) event;
-            final CommandSender commandSender = (CommandSender) wrongFormatEvent.getDispatchContext().getCommandSender();
+        if (event instanceof MismatchedFormatEvent) {
+            final MismatchedFormatEvent mismatchedFormatEvent = (MismatchedFormatEvent) event;
+            final CommandSender commandSender = (CommandSender) mismatchedFormatEvent.getCommandSender();
 
             communicator.error(commandSender, "command.error.format");
             return true;

@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.server;
 
-import cn.chuanwise.util.Strings;
+import cn.chuanwise.common.util.Strings;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.executor.FormatExecutor;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.ServerInfo;

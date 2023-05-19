@@ -5,11 +5,12 @@ import cn.chuanwise.mclib.bukkit.ask.AskerManager;
 import cn.chuanwise.mclib.bukkit.command.BukkitCommandLib;
 import cn.chuanwise.mclib.bukkit.plugin.BukkitPlugin;
 import cn.chuanwise.mclib.bukkit.util.Commands;
+import cn.chuanwise.common.util.Preconditions;
+import cn.chuanwise.common.util.Streams;
 import cn.chuanwise.mclib.storage.Language;
 import cn.chuanwise.storage.file.StoredFile;
-import cn.chuanwise.util.Preconditions;
-import cn.chuanwise.util.Streams;
 import cn.chuanwise.xiaoming.minecraft.bukkit.command.MessageHandler;
+import cn.chuanwise.xiaoming.minecraft.bukkit.command.PluginCommands;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.BaseConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.WhitelistConfiguration;
@@ -53,7 +54,7 @@ public class XMMCBukkitPlugin
     }
 
     @SuppressWarnings("all")
-    public void reload() throws IOException {
+    public void reload() throws Exception {
         final File dataFolder = createDataFolder();
 
         // 载入语言文件
@@ -66,7 +67,7 @@ public class XMMCBukkitPlugin
         connectionConfiguration = setupConfiguration(ConnectionConfiguration.class, new File(configurationDirectory, "connection.yml"), ConnectionConfiguration::new);
         whitelistConfiguration = setupConfiguration(WhitelistConfiguration.class, new File(configurationDirectory, "whitelist.yml"), WhitelistConfiguration::new);
 
-        communicator.setDebug(baseConfiguration.isDebug());
+        communicator().setDebug(baseConfiguration.isDebug());
     }
 
     @Override
@@ -76,7 +77,7 @@ public class XMMCBukkitPlugin
             final String enableMessage = Streams.read(getClassLoader().getResourceAsStream("message/enable.txt"), StandardCharsets.UTF_8);
             getServer().getConsoleSender().sendMessage(enableMessage);
         } catch (IOException exception) {
-            communicator.consoleInfoString("欢迎使用小明 b（￣▽￣）d");
+            communicator().consoleInfoString("欢迎使用小明 b（￣▽￣）d");
         }
 
         final int pluginId = 12125;
@@ -94,9 +95,9 @@ public class XMMCBukkitPlugin
             scheduler.runAsyncTask(() -> {
                 client.connect().ifPresent(x -> x.addListener(y -> {
                     if (y.isSuccess()) {
-                        communicator.consoleInfo("net.connect.succeed");
+                        communicator().consoleInfo("net.connect.succeed");
                     } else {
-                        communicator.consoleWarn("net.connect.failed");
+                        communicator().consoleWarn("net.connect.failed");
                     }
                 }));
             });
@@ -104,19 +105,9 @@ public class XMMCBukkitPlugin
 
         // 注册指令
         commandLib = new BukkitCommandLib(this);
-        commandLib.registerHandler(new MessageHandler());
-
-        commands = new PluginCommands(this);
-
-        commandLib.getCommandManager()
-                .registerCommands(commands);
-
-        commandLib.commandBuilder()
-                .name("xm")
-                .aliases("xiaomingminecraft", "xmmc", "xiaomingmc")
-                .build()
-                .active();
-
+        commandLib.bootstrap()
+            .handler(new MessageHandler())
+            .object(new PluginCommands(this));
         setupAskModule();
     }
 
@@ -127,10 +118,10 @@ public class XMMCBukkitPlugin
             public boolean execute(CommandSender commandSender, String s, String[] strings) {
                 final Optional<Asker> optionalAsker = askerManager.getAsker(commandSender);
                 if (!optionalAsker.isPresent()) {
-                    communicator.warn(commandSender, "ask.free");
+                    communicator().warn(commandSender, "ask.free");
                 } else {
                     optionalAsker.get().accept();
-                    communicator.info(commandSender, "ask.accepted");
+                    communicator().info(commandSender, "ask.accepted");
                 }
                 return false;
             }
@@ -141,10 +132,10 @@ public class XMMCBukkitPlugin
             public boolean execute(CommandSender commandSender, String s, String[] strings) {
                 final Optional<Asker> optionalAsker = askerManager.getAsker(commandSender);
                 if (!optionalAsker.isPresent()) {
-                    communicator.warn(commandSender, "ask.free");
+                    communicator().warn(commandSender, "ask.free");
                 } else {
                     optionalAsker.get().deny();
-                    communicator.info(commandSender, "ask.denied");
+                    communicator().info(commandSender, "ask.denied");
                 }
                 return false;
             }
@@ -155,10 +146,10 @@ public class XMMCBukkitPlugin
             public boolean execute(CommandSender commandSender, String s, String[] strings) {
                 final Optional<Asker> optionalAsker = askerManager.getAsker(commandSender);
                 if (!optionalAsker.isPresent()) {
-                    communicator.warn(commandSender, "ask.free");
+                    communicator().warn(commandSender, "ask.free");
                 } else {
                     optionalAsker.get().ignore();
-                    communicator.info(commandSender, "ask.ignored");
+                    communicator().info(commandSender, "ask.ignored");
                 }
                 return false;
             }
@@ -173,7 +164,7 @@ public class XMMCBukkitPlugin
         final Optional<ChannelFuture> optional = client.disconnectManually();
         if (optional.isPresent()) {
             optional.get().sync();
-            communicator.consoleInfo("net.disconnect.succeed");
+            communicator().consoleInfo("net.disconnect.succeed");
         }
 
         final NioEventLoopGroup executors = client.getExecutors();
@@ -186,7 +177,7 @@ public class XMMCBukkitPlugin
             final String enableMessage = Streams.read(getClassLoader().getResourceAsStream("message/disable.txt"), StandardCharsets.UTF_8);
             getServer().getConsoleSender().sendMessage(enableMessage);
         } catch (IOException exception) {
-            communicator.consoleInfoString("期待我们的下一次重逢！");
+            communicator().consoleInfoString("期待我们的下一次重逢！");
         }
     }
 }

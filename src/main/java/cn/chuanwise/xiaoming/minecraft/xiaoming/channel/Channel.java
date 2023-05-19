@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel;
 
-import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.common.util.Preconditions;
 import lombok.Data;
 
 import java.util.*;
@@ -20,8 +20,11 @@ public class Channel {
             return false;
         }
         boolean work = false;
+        final Map<String, Object> environment = new HashMap<>();
+        environment.put("channel", this);
+
         for (WorkGroup workGroup : workGroups.values()) {
-            if (workGroup.work(object)) {
+            if (workGroup.work(object, environment)) {
                 work = true;
             }
         }

@@ -1,9 +1,9 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
 import cn.chuanwise.mclib.util.Colors;
-import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Times;
+import cn.chuanwise.common.place.Container;
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Times;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
@@ -101,7 +101,7 @@ public class StateInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
         final Server server = getServer();
         final Container<OnlineClient> optionalOnlineClient = CollectionUtil.findFirst(server.getOnlineClients(), x -> Objects.equals(x.getServerInfo(), serverInfo));
 
-        if (optionalOnlineClient.notEmpty()) {
+        if (optionalOnlineClient.isSet()) {
             optionalOnlineClient.get().disconnect().addListener(x -> {
                 if (x.isSuccess()) {
                     user.sendMessage("成功删除服务器「" + serverInfo.getName() + "」，但未断开与之的连接");
@@ -139,7 +139,7 @@ public class StateInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
     @Filter(Words.PLAYER + Words.LIST)
     @Filter(Words.ALL + Words.PLAYER)
     @Required("xmmc.user.onlinePlayers")
-    void onlinePlayers(XiaoMingUser user) throws InterruptedException, TimeoutException {
+    void allOnlinePlayers(XiaoMingUser user) throws InterruptedException, TimeoutException {
         final Server server = getServer();
         if (!server.isBound()) {
             user.sendError("服务器尚未启动！");

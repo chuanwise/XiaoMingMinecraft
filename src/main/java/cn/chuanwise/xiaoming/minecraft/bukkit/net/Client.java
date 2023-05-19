@@ -10,16 +10,16 @@ import cn.chuanwise.net.netty.packet.JsonPacketCodec;
 import cn.chuanwise.net.netty.packet.PacketHandler;
 import cn.chuanwise.net.netty.protocol.BaseProtocol;
 import cn.chuanwise.net.packet.*;
-import cn.chuanwise.toolkit.box.Box;
-import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.Throwables;
-import cn.chuanwise.util.Times;
+import cn.chuanwise.common.place.Box;
+import cn.chuanwise.common.place.Container;
+import cn.chuanwise.common.util.Throwables;
+import cn.chuanwise.common.util.Times;
 import cn.chuanwise.xiaoming.minecraft.bukkit.XMMCBukkitPlugin;
 import cn.chuanwise.xiaoming.minecraft.bukkit.configuration.ConnectionConfiguration;
 import cn.chuanwise.xiaoming.minecraft.protocol.ConfirmRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyRequest;
 import cn.chuanwise.xiaoming.minecraft.protocol.VerifyResponse;
-import cn.chuanwise.xiaoming.minecraft.util.PasswordHashUtil;
+import cn.chuanwise.xiaoming.minecraft.util.Encryptions;
 import cn.chuanwise.xiaoming.minecraft.protocol.XMMCProtocol;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -48,7 +48,8 @@ import java.util.function.Predicate;
 
 @Getter
 public class Client
-        extends BukkitPluginObject<XMMCBukkitPlugin> {
+    extends BukkitPluginObject<XMMCBukkitPlugin> {
+    
     /** 连接的引导器 */
     protected final Bootstrap bootstrap = new Bootstrap();
 
@@ -79,6 +80,7 @@ public class Client
      */
     @ChannelHandler.Sharable
     private class ConnectHandler extends ChannelInboundHandlerAdapter {
+        
         /** 检测连接状态变化的量 */
         private volatile boolean connected;
 
@@ -287,7 +289,7 @@ public class Client
             // 构造连接请求包
             final String passwordHash;
             try {
-                passwordHash = PasswordHashUtil.createHash(configuration.getPassword());
+                passwordHash = Encryptions.createHash(configuration.getPassword());
             } catch (NoSuchAlgorithmException e) {
                 communicator().consoleError("net.verify.error.algorithm");
                 return Optional.empty();

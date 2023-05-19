@@ -1,6 +1,6 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger;
 
-import cn.chuanwise.pattern.ParameterPattern;
+import cn.chuanwise.common.pattern.ParameterPattern;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import lombok.AllArgsConstructor;
 import lombok.Data;

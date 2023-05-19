@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.configuration;
 
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Preconditions;
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Preconditions;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.preservable.SimplePreservable;
 import lombok.Data;

@@ -1,7 +1,7 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.command;
 
-import cn.chuanwise.pattern.ParameterPattern;
-import cn.chuanwise.util.Tags;
+import cn.chuanwise.common.pattern.ParameterPattern;
+import cn.chuanwise.common.util.Tags;
 import cn.chuanwise.xiaoming.permission.Permission;
 import lombok.Data;
 

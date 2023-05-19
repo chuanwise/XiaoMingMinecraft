@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming;
 
-import cn.chuanwise.api.Logger;
-import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.CollectionUtil;
+import cn.chuanwise.common.api.Logger;
+import cn.chuanwise.common.place.Container;
+import cn.chuanwise.common.util.CollectionUtil;
 import cn.chuanwise.xiaoming.language.LanguageManager;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.Channel;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.WorkGroup;
@@ -41,7 +41,7 @@ public class XMMCXiaoMingPlugin extends JavaPlugin {
     protected BaseConfiguration baseConfiguration;
 
     protected VerifyInteractors verifyInteractors = new VerifyInteractors();
-    private final CommandRequestInteractors interactors = new CommandRequestInteractors();
+    private final CommandRequestInteractors commandRequestInteractors = new CommandRequestInteractors();
 
     protected Server server;
     protected Logger log;
@@ -58,6 +58,9 @@ public class XMMCXiaoMingPlugin extends JavaPlugin {
         commandRequestConfiguration = setupConfiguration(CommandRequestConfiguration.class, new File(dataFolder, "command-request.json"), CommandRequestConfiguration::new);
         playerVerifyCodeConfiguration = setupConfiguration(PlayerVerifyCodeConfiguration.class, new File(dataFolder, "player-verify-codes.json"), PlayerVerifyCodeConfiguration::new);
         baseConfiguration = setupConfiguration(BaseConfiguration.class, new File(dataFolder, "base.json"), BaseConfiguration::new);
+
+        xiaoMingBot.getInteractorManager().unregisterInteractors(this);
+        registerInteractors();
     }
 
     @Override
@@ -108,20 +111,24 @@ public class XMMCXiaoMingPlugin extends JavaPlugin {
         // 注册交互器参数解析器
         registerParameterParsers();
 
-        // 注册交互器
+        xiaoMingBot.getEventManager().registerListeners(new TriggerListeners(), this);
+        xiaoMingBot.getEventManager().registerListeners(new NotificationListeners(), this);
+    }
+
+    protected void registerInteractors() {
+        final File customizerDirectory = new File(getDataFolder(), "interactors");
+        customizerDirectory.mkdirs();
+    
         xiaoMingBot.getInteractorManager().registerInteractors(new ConnectionInteractors(), this);
         xiaoMingBot.getInteractorManager().registerInteractors(new StateInteractors(), this);
         xiaoMingBot.getInteractorManager().registerInteractors(new GuilderInteractors(), this);
         xiaoMingBot.getInteractorManager().registerInteractors(new ChannelInteractors(), this);
-        xiaoMingBot.getInteractorManager().registerInteractors(new CommandInteractors(), this);
+        // xiaoMingBot.getInteractorManager().registerInteractors(new CommandInteractors(), this);
         xiaoMingBot.getInteractorManager().registerInteractors(new AccountInteractors(), this);
-        xiaoMingBot.getInteractorManager().registerInteractors(new PlayerVerifyCodeInteractors(), this);
+        // xiaoMingBot.getInteractorManager().registerInteractors(new PlayerVerifyCodeInteractors(), this);
         xiaoMingBot.getInteractorManager().registerInteractors(new ConfigurationInteractors(), this);
-        xiaoMingBot.getInteractorManager().registerInteractors(interactors, this);
+        // xiaoMingBot.getInteractorManager().registerInteractors(commandRequestInteractors, this);
         xiaoMingBot.getInteractorManager().registerInteractors(verifyInteractors, this);
-
-        xiaoMingBot.getEventManager().registerListeners(new TriggerListeners(), this);
-        xiaoMingBot.getEventManager().registerListeners(new NotificationListeners(), this);
     }
 
     @Override
@@ -152,20 +159,20 @@ public class XMMCXiaoMingPlugin extends JavaPlugin {
                 return null;
             }
 
-            return Container.of(optionalOnlineClient.get());
+            return cn.chuanwise.toolkit.container.Container.of(optionalOnlineClient.get());
         }, true, this);
 
         xiaoMingBot.getInteractorManager().registerParameterParser(ServerInfo.class, context -> {
             final XiaoMingUser user = context.getUser();
             final String inputValue = context.getInputValue();
-
+    
             final ServerInfo serverInfo = sessionConfiguration.getServers().get(inputValue);
             if (Objects.isNull(serverInfo)) {
                 user.sendError("小明还不认识服务器「" + inputValue + "」");
                 return null;
             }
-
-            return Container.of(serverInfo);
+    
+            return cn.chuanwise.toolkit.container.Container.of(serverInfo);
         }, true, this);
 
         xiaoMingBot.getInteractorManager().registerThrowableCaughter(TimeoutException.class, (context, throwable) -> {
@@ -199,7 +206,7 @@ public class XMMCXiaoMingPlugin extends JavaPlugin {
 
         languageManager.registerConvertor(Trigger.class, x -> Trigger.TRIGGER_NAMES.get(x.getClass()), this);
         languageManager.registerOperators(Trigger.class, this)
-                .addOperator("name", x -> Trigger.TRIGGER_NAMES.get(x.getClass()));
+                .addOperator("type", x -> Trigger.TRIGGER_NAMES.get(x.getClass()));
 
         languageManager.registerOperators(ServerInfo.class, this)
                 .addOperator("name", ServerInfo::getName);

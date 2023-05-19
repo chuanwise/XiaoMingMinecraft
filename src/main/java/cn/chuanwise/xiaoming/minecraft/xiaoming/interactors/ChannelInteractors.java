@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 
-import cn.chuanwise.toolkit.container.Container;
-import cn.chuanwise.util.*;
-import cn.chuanwise.util.Collections;
+import cn.chuanwise.common.place.Container;
+import cn.chuanwise.common.util.*;
+import cn.chuanwise.common.util.Collections;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
@@ -45,7 +45,7 @@ public class ChannelInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
                 user.sendError("找不到频道「" + inputValue + "」");
                 return null;
             } else {
-                return Container.of(channel);
+                return cn.chuanwise.toolkit.container.Container.of(channel);
             }
         }, true, plugin);
 
@@ -62,7 +62,7 @@ public class ChannelInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
                 user.sendError("频道「" + channel.getName() + "」内没有工作组「" + inputValue + "」");
                 return null;
             } else {
-                return (Container) Container.ofOptional(optionalWorkGroup);
+                return cn.chuanwise.toolkit.container.Container.ofOptional(optionalWorkGroup);
             }
         }, true, plugin);
     }

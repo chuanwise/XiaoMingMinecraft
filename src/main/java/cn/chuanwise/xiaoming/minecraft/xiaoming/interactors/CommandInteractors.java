@@ -3,7 +3,7 @@ package cn.chuanwise.xiaoming.minecraft.xiaoming.interactors;
 import cn.chuanwise.mclib.bukkit.net.Player;
 import cn.chuanwise.mclib.bukkit.net.protocol.ExecuteResponse;
 import cn.chuanwise.mclib.util.Colors;
-import cn.chuanwise.util.CollectionUtil;
+import cn.chuanwise.common.util.CollectionUtil;
 import cn.chuanwise.xiaoming.annotation.Filter;
 import cn.chuanwise.xiaoming.annotation.FilterParameter;
 import cn.chuanwise.xiaoming.annotation.Required;
@@ -19,7 +19,9 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 @SuppressWarnings("all")
-public class CommandInteractors extends SimpleInteractors<XMMCXiaoMingPlugin> {
+public class CommandInteractors
+        extends SimpleInteractors<XMMCXiaoMingPlugin> {
+
     @Filter(Words.SERVER + Words.CONSOLE + Words.EXECUTE + " {服务器} {r:指令}")
     @Required("xmmc.admin.execute.console")
     void consoleExecute(XiaoMingUser user,

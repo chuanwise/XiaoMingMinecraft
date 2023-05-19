@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.listeners;
 
 import cn.chuanwise.mclib.bukkit.net.protocol.ExecuteResponse;
-import cn.chuanwise.pattern.ParameterPattern;
-import cn.chuanwise.util.StringUtil;
+import cn.chuanwise.common.pattern.ParameterPattern;
+import cn.chuanwise.common.util.StringUtil;
 import cn.chuanwise.xiaoming.annotation.EventListener;
 import cn.chuanwise.xiaoming.contact.message.Message;
 import cn.chuanwise.xiaoming.event.MessageEvent;

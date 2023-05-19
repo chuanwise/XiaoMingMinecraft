@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.server;
 
 import cn.chuanwise.mclib.bukkit.net.Player;
-import cn.chuanwise.util.Preconditions;
-import cn.chuanwise.util.Strings;
+import cn.chuanwise.common.util.Preconditions;
+import cn.chuanwise.common.util.Strings;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.XMMCXiaoMingPlugin;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.channel.trigger.*;
 import cn.chuanwise.xiaoming.minecraft.xiaoming.configuration.PlayerConfiguration;

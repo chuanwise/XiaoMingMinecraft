@@ -1,8 +1,8 @@
 package cn.chuanwise.xiaoming.minecraft.xiaoming.configuration;
 
-import cn.chuanwise.api.AbstractOriginalTagMarkable;
-import cn.chuanwise.util.CollectionUtil;
-import cn.chuanwise.util.Tags;
+import cn.chuanwise.common.api.AbstractOriginalTagMarkable;
+import cn.chuanwise.common.util.CollectionUtil;
+import cn.chuanwise.common.util.Tags;
 import lombok.Data;
 
 import java.util.Set;
